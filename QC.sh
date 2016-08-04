@@ -91,7 +91,7 @@ COMPRESSION_LEVEL=0
 -o "$seqId"_Undetermined_BaseRecalibrator.txt
 
 #TODO calculate pearson correlation
-
+Rscript bqsrAnalysis.R "$seqId"_Undetermined_BaseRecalibrator.txt
 
 #Calculate error-rate by cycle
 /share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \

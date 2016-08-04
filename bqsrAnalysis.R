@@ -2,14 +2,16 @@
 
 #load modules
 require(gsalib)
+require(outparse)
 
-#check BQSR report was passed
-if (length(args)!=1) {
-  stop("Usage: bqsrAnalysis.R <BQSR_GatkReport>.\n", call.=FALSE)
-}
+#parse command-line args
+option_list = list(
+  make_option(c("-r", "--report"), action="store", deafult='', type="character", help="path to GATK BQSR report")
+)
+opt=parse_args(OptionParser(option_list=option_list))
 
 #Load BQSR GatkReport
-data = gsa.read.gatkreport(args[1])
+data = gsa.read.gatkreport(opt$report)
 
 #plot expected vs observed quality scores
 plot(data$RecalTable1$QualityScore, data$RecalTable1$EmpericalQuality)
