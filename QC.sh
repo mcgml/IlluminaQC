@@ -90,3 +90,6 @@ COMPRESSION_LEVEL=0
 -o recal_data.table
 
 #clean up
+rm -r tmp
+rm "$seqId"_Undetermined_sorted.bam
+rm "$seqId"_Undetermined_rmdup.bam "$seqId"_Undetermined_rmdup.bai
