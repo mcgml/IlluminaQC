@@ -29,6 +29,7 @@ pctGtQ30=$(cut -d, -f43 /data/archive/metrics/"$seqId"_SAV.txt | awk '{ if (NR>1
 #move fastq files into folders
 for i in $(ls *fastq.gz); do
 	 sampleId=$(echo "$i" | cut -d_ -f1);
+
 	 mkdir -p "$sampleId"
 	 mv "$i" "$sampleId"
 done
@@ -91,13 +92,14 @@ COMPRESSION_LEVEL=0
 
 #TODO calculate pearson correlation
 
+
 #Calculate error-rate by cycle
 /share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
--T ErrorRateByCycle \
+-T ErrorRatePerCycle \
 -R /data/db/phix/Illumina/1.1/genome.fa \
 -I "$seqId"_Undetermined_realigned.bam \
 -knownSites /data/db/phix/phix.vcf \
--o "$seqId"_Undetermined_ErrorRateByCycle.txt
+-o "$seqId"_Undetermined_ErrorRatePerCycle.txt
 
 #clean up
 rm -r tmp
