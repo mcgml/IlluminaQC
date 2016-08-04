@@ -52,7 +52,7 @@ Undetermined_S0_L001_R2_001.fastq.gz
 -R '@RG\tID:'"$seqId"'_PhiX\tSM:PhiX\tPL:ILLUMINA\tLB:'"$seqId"'_PhiX' \
 /data/db/phix/mappers/bwa/genome.fa \
 "$seqId"_Undetermined_R1_trimmed.fastq "$seqId"_Undetermined_R2_trimmed.fastq | \
-/share/apps/samtools-distros/samtools-1.3.1/samtools view -f2 | \
+/share/apps/samtools-distros/samtools-1.3.1/samtools view -h -f2 | \
 /share/apps/samtools-distros/samtools-1.3.1/samtools sort -l0 -o "$seqId"_Undetermined_sorted.bam
 
 #Mark duplicate reads
