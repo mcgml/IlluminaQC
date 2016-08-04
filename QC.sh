@@ -1,8 +1,8 @@
 #!/bin/bash
 #PBS -l walltime=02:00:00
 #PBS -l ncpus=12
-PBS_O_WORKDIR=(`echo $PBS_O_WORKDIR | sed "s/^\/state\/partition1//" `)
-cd $PBS_O_WORKDIR
+#PBS_O_WORKDIR=(`echo $PBS_O_WORKDIR | sed "s/^\/state\/partition1//" `)
+#cd $PBS_O_WORKDIR
 
 #Description: Quality control for Illumina sequencing data
 #Author: Matt Lyon, All Wales Medical Genetics Lab
@@ -17,7 +17,7 @@ version="dev"
 #TODO mkdir run folder, cd and qsub this script
 
 #convert Bcls to FASTQ
-bcl2fastq -l WARNING -R /data/archive/"$seqId" -o .
+bcl2fastq -l WARNING -R /data/archive/miseq/"$seqId" -o .
 
 #Get metrics from SAV
 clusterDensity=$(cut -d, -f23 /data/archive/metrics/"$seqId"_SAV.txt | awk '{ if (NR>1) total += $1 } END { print total/(NR-1)}')
@@ -28,8 +28,8 @@ pctGtQ30=$(cut -d, -f43 /data/archive/metrics/"$seqId"_SAV.txt | awk '{ if (NR>1
 #move fastq files into folders
 for i in $(ls *fastq.gz); do
 	 sampleId=$(echo "$i" | cut -d_ -f1);
-	 mkdir -p Undetermined
-	 mv "$i" Undetermined
+	 mkdir -p "$sampleId"
+	 mv "$i" "$sampleId"
 done
 
 #start QC
