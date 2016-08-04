@@ -88,7 +88,8 @@ COMPRESSION_LEVEL=0
 -R /data/db/phix/Illumina/1.1/genome.fa \
 -I "$seqId"_Undetermined_realigned.bam \
 -knownSites /data/db/phix/phix.vcf \
--o "$seqId"_Undetermined_BaseRecalibrator.txt
+-o "$seqId"_Undetermined_BaseRecalibrator.txt \
+-dt NONE
 
 #Calculate pearson correlation
 pearson=$(/share/apps/R-distros/R-3.3.1/bin/Rscript bqsrAnalysis.R -r "$seqId"_Undetermined_BaseRecalibrator.txt)
