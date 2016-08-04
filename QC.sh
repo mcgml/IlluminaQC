@@ -98,7 +98,6 @@ COMPRESSION_LEVEL=0
 -T ErrorRatePerCycle \
 -R /data/db/phix/Illumina/1.1/genome.fa \
 -I "$seqId"_Undetermined_realigned.bam \
--knownSites /data/db/phix/phix.vcf \
 -o "$seqId"_Undetermined_ErrorRatePerCycle.txt
 
 #clean up
