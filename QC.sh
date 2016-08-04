@@ -74,7 +74,7 @@ COMPRESSION_LEVEL=0
 /share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
 -T IndelRealigner \
 -R /data/db/phix/Illumina/1.1/genome.fa \
--targetIntervals "$seqId"_Undetermined_realigned.intervals \
+-targetIntervals "$seqId"_Undetermined_realign.intervals \
 -I "$seqId"_Undetermined_rmdup.bam \
 -o "$seqId"_Undetermined_realigned.bam \
 -compress 0 \
