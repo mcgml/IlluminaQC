@@ -81,13 +81,23 @@ COMPRESSION_LEVEL=0
 -compress 0 \
 -dt NONE
 
-#calculate error rate
+#Get quality vs error rate data
 /share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
 -T BaseRecalibrator \
 -R /data/db/phix/Illumina/1.1/genome.fa \
 -I "$seqId"_Undetermined_realigned.bam \
 -knownSites /data/db/phix/phix.vcf \
--o recal_data.table
+-o "$seqId"_Undetermined_BaseRecalibrator.txt
+
+#TODO calculate pearson correlation
+
+#Calculate error-rate by cycle
+/share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
+-T ErrorRateByCycle \
+-R /data/db/phix/Illumina/1.1/genome.fa \
+-I "$seqId"_Undetermined_realigned.bam \
+-knownSites /data/db/phix/phix.vcf \
+-o "$seqId"_Undetermined_ErrorRateByCycle.txt
 
 #clean up
 rm -r tmp
