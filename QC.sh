@@ -73,6 +73,7 @@ COMPRESSION_LEVEL=0
 -dt NONE
 
 #Realign around indels
+#TODO increase max reads for high depth
 /share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
 -T IndelRealigner \
 -R /data/db/phix/Illumina/1.1/genome.fa \
