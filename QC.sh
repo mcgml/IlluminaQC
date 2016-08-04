@@ -90,15 +90,14 @@ COMPRESSION_LEVEL=0
 -knownSites /data/db/phix/phix.vcf \
 -o "$seqId"_Undetermined_BaseRecalibrator.txt
 
-#TODO calculate pearson correlation
-Rscript bqsrAnalysis.R "$seqId"_Undetermined_BaseRecalibrator.txt
+#Calculate pearson correlation
+pearson=$(/share/apps/R-distros/R-3.3.1/bin/Rscript bqsrAnalysis.R -r "$seqId"_Undetermined_BaseRecalibrator.txt)
 
-#Calculate error-rate by cycle
-/share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
--T ErrorRatePerCycle \
--R /data/db/phix/Illumina/1.1/genome.fa \
--I "$seqId"_Undetermined_realigned.bam \
--o "$seqId"_Undetermined_ErrorRatePerCycle.txt
+echo "$clusterDensity"
+echo "$clusterDensityPassingFilter"
+echo "$pctPassingFilter"
+echo "$pctGtQ30"
+echo "$pearson"
 
 #clean up
 rm -r tmp
