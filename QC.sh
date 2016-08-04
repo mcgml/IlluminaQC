@@ -8,7 +8,7 @@
 #Author: Matt Lyon, All Wales Medical Genetics Lab
 #Mode: BY_CHIP
 version="dev"
-seqId="160728_M02641_0123_000000000-ARBU9"
+seqId="160725_M02641_0122_000000000-AU4LF"
 
 #TODO support multiple lanes
 #TODO support HiSeq
