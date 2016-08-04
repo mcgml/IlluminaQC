@@ -42,6 +42,7 @@ cd Undetermined
 -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT \
 -o "$seqId"_Undetermined_R1_trimmed.fastq \
 -p "$seqId"_Undetermined_R2_trimmed.fastq \
+--minimum-length 30 \
 Undetermined_S0_L001_R1_001.fastq.gz \
 Undetermined_S0_L001_R2_001.fastq.gz
 
