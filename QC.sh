@@ -17,7 +17,7 @@ version="dev"
 #TODO mkdir run folder, cd and qsub this script
 
 #convert Bcls to FASTQ
-bcl2fastq -R /data/archive/"$seqId" -o .
+bcl2fastq -l WARNING -R /data/archive/"$seqId" -o .
 
 #Get metrics from SAV
 clusterDensity=$(cut -d, -f23 /data/archive/metrics/"$seqId"_SAV.txt | awk '{ if (NR>1) total += $1 } END { print total/(NR-1)}')
