@@ -2,11 +2,11 @@
 
 #load modules
 require(gsalib)
-require(outparse)
+require(optparse)
 
 #parse command-line args
 option_list = list(
-  make_option(c("-r", "--report"), action="store", deafult='', type="character", help="path to GATK BQSR report")
+  make_option(c("-r", "--report"), action="store", default='', type="character", help="path to GATK BQSR report")
 )
 opt=parse_args(OptionParser(option_list=option_list))
 
@@ -14,11 +14,10 @@ opt=parse_args(OptionParser(option_list=option_list))
 data = gsa.read.gatkreport(opt$report)
 
 #plot expected vs observed quality scores
-plot(data$RecalTable1$QualityScore, data$RecalTable1$EmpericalQuality)
+plot(data$RecalTable1$QualityScore, data$RecalTable1$EmpiricalQuality)
 
 #calculate Pearson correlation
-pearson = cor.test(data$RecalTable1$QualityScore, data$RecalTable1$EmpericalQuality, method = "pearson", conf.level = 0.95)
+pearson = cor.test(data$RecalTable1$QualityScore, data$RecalTable1$EmpiricalQuality, method = "pearson", conf.level = 0.95)
 
 #print result
-print(pearson$statistic)
-print(pearson$p.value)
+print(pearson$estimate)
