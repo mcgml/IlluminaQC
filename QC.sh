@@ -1,122 +1,89 @@
 #!/bin/bash
-#PBS -l walltime=01:00:00
-#PBS -l ncpus=1
-#PBS -l mem=2gb
-#PBS_O_WORKDIR=(`echo $PBS_O_WORKDIR | sed "s/^\/state\/partition1//" `)
+#PBS -l walltime=02:00:00
+#PBS -l ncpus=12
+PBS_O_WORKDIR=(`echo $PBS_O_WORKDIR | sed "s/^\/state\/partition1//" `)
 cd $PBS_O_WORKDIR
 
-#Description: QC Script
-#Author: Matthew Lyon
-#Status: Development
-#Mode: BY_LANE
+#Description: Quality control for Illumina sequencing data
+#Author: Matt Lyon, All Wales Medical Genetics Lab
+#Mode: BY_CHIP
+version="dev"
 
-#load sample variables
-. *.variables
+#TODO support multiple lanes
+#TODO support HiSeq
+#TODO launch sample analysis on success
+#TODO move all archived NGS runs into a single folder
+#TODO replace SAV metrics with Stats folder from bcl2fastq
+#TODO mkdir run folder, cd and qsub this script
 
-if [[ $(gunzip -t "$R1Filename") -ne 0 ]] || [[ $(gunzip -t "$R2Filename") -ne 0 ]] ;then
-	echo "FASTQ file(s) are corrupt, cannot proceed."
-	exit -1
-fi
+#convert Bcls to FASTQ
+bcl2fastq -R /data/archive/"$seqId" -o .
 
-#Get cluster density (K/mm2)
+#Get metrics from SAV
 clusterDensity=$(cut -d, -f23 /data/archive/metrics/"$seqId"_SAV.txt | awk '{ if (NR>1) total += $1 } END { print total/(NR-1)}')
-
-#Get density passing filter (K/mm2)
 clusterDensityPassingFilter=$(cut -d, -f24 /data/archive/metrics/"$seqId"_SAV.txt | awk '{ if (NR>1) total += $1 } END { print total/(NR-1)}')
-
-#Get clusters passing filter
 pctPassingFilter=$(cut -d, -f44 /data/archive/metrics/"$seqId"_SAV.txt | awk '{ if (NR>1) total += $1 } END { print total/(NR-1)}')
-
-#Get % >Q30
 pctGtQ30=$(cut -d, -f43 /data/archive/metrics/"$seqId"_SAV.txt | awk '{ if (NR>1) total += $1 } END { print total/(NR-1)}')
 
-#trim read 1 adapter from R1
-/share/apps/cutadapt-distros/cutadapt-1.8/bin/cutadapt \
+#move fastq files into folders
+for i in $(ls *fastq.gz); do
+	 sampleId=$(echo "$i" | cut -d_ -f1);
+	 mkdir -p Undetermined
+	 mv "$i" Undetermined
+done
+
+#start QC
+cd Undetermined
+
+#trim adapters and remove short reads
+/share/apps/cutadapt-distros/cutadapt-1.9.1/bin/cutadapt \
 -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC \
--e 0.2 \
--o "$SampleID"_R1_trimmed.fastq \
-"$R1Filename"
+-A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT \
+-o "$seqId"_Undetermined_R1_trimmed.fastq \
+-p "$seqId"_Undetermined_R2_trimmed.fastq \
+Undetermined_S0_L001_R1_001.fastq.gz \
+Undetermined_S0_L001_R2_001.fastq.gz
 
-#trim read 2 adapter from R2
-/share/apps/cutadapt-distros/cutadapt-1.8/bin/cutadapt \
--a AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT \
--e 0.2 \
--o "$SampleID"_R2_trimmed.fastq \
-"$R2Filename"
-
-#remove short reads
-/usr/java/jdk1.7.0_51/bin/java -Xmx2g -jar /share/apps/trimmomatic/trimmomatic-0.32.jar PE \
-"$SampleID"_R1_trimmed.fastq \
-"$SampleID"_R2_trimmed.fastq \
-"$SampleID"_R1_paired.fastq \
-"$SampleID"_R1_unpaired.fastq \
-"$SampleID"_R2_paired.fastq \
-"$SampleID"_R2_unpaired.fastq \
-MINLEN:36
-
-#run fastqc
-fastqc "$SampleID"_R1_paired.fastq
-fastqc "$SampleID"_R2_paired.fastq
-
-#locally align reads to reference genome
-/share/apps/bwa-distros/bwa-0.7.10/bwa mem \
+#Align reads to reference genome, sort by coordinate and convert to BAM
+/share/apps/bwa-distros/bwa-0.7.15/bwa mem \
 -M \
--R '@RG\tID:'"$RunID"'\tSM:'"$RunID"'\tPL:'"$Platform"'\tLB:'"$ExperimentName" \
+-R '@RG\tID:'"$seqId"'_PhiX\tSM:PhiX\tPL:ILLUMINA\tLB:'"$seqId"'_PhiX' \
 /data/db/phix/mappers/bwa/genome.fa \
-"$SampleID"_R1_paired.fastq "$SampleID"_R2_paired.fastq \
-> "$RunID"_"$SampleID".sam
-
-#Sort reads and convert to BAM
-/usr/java/jdk1.7.0_51/bin/java -Xmx2g -jar /share/apps/picard-tools-distros/picard-tools-1.129/picard.jar SortSam \
-INPUT="$RunID"_"$SampleID".sam \
-OUTPUT="$RunID"_"$SampleID"_sorted.bam \
-SORT_ORDER=coordinate \
-COMPRESSION_LEVEL=0
-
-#flagstat
-samtools flagstat "$RunID"_"$SampleID"_sorted.bam
+"$seqId"_Undetermined_R1_trimmed.fastq "$seqId"_Undetermined_R2_trimmed.fastq | \
+/share/apps/samtools-distros/samtools-1.3.1/samtools sort -l0 -o "$seqId"_Undetermined_sorted.bam
 
 #Mark duplicate reads
-/usr/java/jdk1.7.0_51/bin/java -Xmx2g -jar /share/apps/picard-tools-distros/picard-tools-1.129/picard.jar MarkDuplicates \
-INPUT="$RunID"_"$SampleID"_sorted.bam \
-OUTPUT="$RunID"_"$SampleID"_rmdup.bam \
+/share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/picard-tools-distros/picard-tools-2.5.0/picard.jar MarkDuplicates \
+INPUT="$seqId"_Undetermined_sorted.bam \
+OUTPUT="$seqId"_Undetermined_rmdup.bam \
+METRICS_FILE="$seqId"_Undetermined_MarkDuplicatesMetrics.txt \
 CREATE_INDEX=true \
-METRICS_FILE="$RunID"_"$SampleID"_dupMetrics.txt \
 COMPRESSION_LEVEL=0
 
 #Identify regions requiring realignment
-/usr/java/jdk1.7.0_51/bin/java -Xmx2g -jar /share/apps/GATK-distros/GATK_3.3.0/GenomeAnalysisTK.jar \
+/share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx2g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
 -T RealignerTargetCreator \
 -R /data/db/phix/Illumina/1.1/genome.fa \
--I "$RunID"_"$SampleID"_rmdup.bam \
--o "$RunID"_"$SampleID".intervals \
+-I "$seqId"_Undetermined_rmdup.bam \
+-o "$seqId"_Undetermined_realign.intervals \
 -dt NONE
 
 #Realign around indels
-/usr/java/jdk1.7.0_51/bin/java -Xmx4g -jar /share/apps/GATK-distros/GATK_3.3.0/GenomeAnalysisTK.jar \
+/share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
 -T IndelRealigner \
 -R /data/db/phix/Illumina/1.1/genome.fa \
--targetIntervals "$RunID"_"$SampleID".intervals \
--I "$RunID"_"$SampleID"_rmdup.bam \
--o "$RunID"_"$SampleID"_realigned.bam \
+-targetIntervals "$seqId"_Undetermined_realigned.intervals \
+-I "$seqId"_Undetermined_rmdup.bam \
+-o "$seqId"_Undetermined_realigned.bam \
+-compress 0 \
 -dt NONE
 
 #calculate error rate
-/usr/java/jdk1.7.0_51/bin/java -Xmx4g -jar /share/apps/GATK-distros/GATK_3.3.0/GenomeAnalysisTK.jar \
+/share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
 -T BaseRecalibrator \
 -R /data/db/phix/Illumina/1.1/genome.fa \
--I "$RunID"_"$SampleID"_realigned.bam \
--knownSites phix.vcf \
+-I "$seqId"_Undetermined_realigned.bam \
+-knownSites /data/db/phix/phix.vcf \
 -o recal_data.table
 
 #clean up
-rm "$SampleID"_R1_paired_fastqc.zip
-rm "$SampleID"_R2_paired_fastqc.zip
-rm "$SampleID"_R1_trimmed.fastq
-rm "$SampleID"_R2_trimmed.fastq
-rm "$SampleID"_R1_unpaired.fastq
-rm "$SampleID"_R2_unpaired.fastq
-rm "$RunID"_"$SampleID".sam
-rm "$RunID"_"$SampleID"_sorted.bam
-rm "$RunID"_"$SampleID"_rmdup.bam
-rm "$RunID"_"$SampleID"_rmdup.bai
