@@ -16,11 +16,12 @@ seqId="160725_M02641_0122_000000000-AU4LF"
 #TODO move all archived NGS runs into a single folder
 #TODO replace SAV metrics with Stats folder from bcl2fastq
 #TODO mkdir run folder, cd and qsub this script
+#TODO parse bcl2fastq stats output
 
 #convert Bcls to FASTQ
 bcl2fastq -l WARNING -R /data/archive/miseq/"$seqId" -o .
 
-#Get metrics from SAV
+#Get metrics from SAV table output
 clusterDensity=$(cut -d, -f23 /data/archive/metrics/"$seqId"_SAV.txt | awk '{ if (NR>1) total += $1 } END { print total/(NR-1)}')
 clusterDensityPassingFilter=$(cut -d, -f24 /data/archive/metrics/"$seqId"_SAV.txt | awk '{ if (NR>1) total += $1 } END { print total/(NR-1)}')
 pctPassingFilter=$(cut -d, -f44 /data/archive/metrics/"$seqId"_SAV.txt | awk '{ if (NR>1) total += $1 } END { print total/(NR-1)}')
@@ -47,7 +48,7 @@ cd Undetermined
 Undetermined_S0_L001_R1_001.fastq.gz \
 Undetermined_S0_L001_R2_001.fastq.gz
 
-#Align reads to reference genome, sort by coordinate and convert to BAM
+#Align reads to reference genome, retain proper pairs, sort by coordinate and convert to BAM
 /share/apps/bwa-distros/bwa-0.7.15/bwa mem \
 -M \
 -R '@RG\tID:'"$seqId"'_PhiX\tSM:PhiX\tPL:ILLUMINA\tLB:'"$seqId"'_PhiX' \
@@ -95,6 +96,7 @@ COMPRESSION_LEVEL=0
 #Calculate pearson correlation
 pearson=$(/share/apps/R-distros/R-3.3.1/bin/Rscript bqsrAnalysis.R -r "$seqId"_Undetermined_BaseRecalibrator.txt)
 
+#print metrics
 echo "$clusterDensity"
 echo "$clusterDensityPassingFilter"
 echo "$pctPassingFilter"

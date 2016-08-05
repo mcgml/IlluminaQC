@@ -6,7 +6,7 @@ require(optparse)
 
 #parse command-line args
 option_list = list(
-  make_option(c("-r", "--report"), action="store", default='', type="character", help="path to GATK BQSR report")
+  make_option(c("-r", "--report"), action="store", default='', type="character", help="Path to GATK BQSR report")
 )
 opt=parse_args(OptionParser(option_list=option_list))
 
