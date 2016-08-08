@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -l walltime=02:00:00
 #PBS -l ncpus=12
-#PBS_O_WORKDIR=(`echo $PBS_O_WORKDIR | sed "s/^\/state\/partition1//" `)
+PBS_O_WORKDIR=(`echo $PBS_O_WORKDIR | sed "s/^\/state\/partition1//" `)
 #cd $PBS_O_WORKDIR
 
 #Description: Quality control for Illumina sequencing data
