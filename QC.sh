@@ -27,7 +27,7 @@ ln -s "$passedSourceDir"/SampleSheet.csv
 ln -s "$passedSourceDir"/?unParameters.xml
 
 #Make variable files
-/share/apps/jre-distros/jre1.8.0_71/bin/java -jar /share/apps/MakeVariableFiles-2.0.0/MakeVariableFiles-2.0.0.jar \
+/share/apps/jre-distros/jre1.8.0_71/bin/java -jar /data/diagnositcs/apps/MakeVariableFiles-2.0.0/MakeVariableFiles-2.0.0.jar \
 SampleSheet.csv \
 ?unParameters.xml
 
@@ -43,13 +43,17 @@ for variableFile in $(ls *.variables); do
 	mv "$variableFile" "$panel"/"$sampleId"
 
 	#move FASTQs into sample folder
-	for fastqPair in fastqPairs; do
-		read1Fastq=$(echo "$fastqPair" | cut -d, -f1)
-		read2Fastq=$(echo "$fastqPair" | cut -d, -f2)
+    for fastqPair in $(ls "$sampleId"_*.fastq.gz | cut -d_ -f1-3 | sort | uniq); do
+        
+        #parse fastq filenames
+        laneId=$(echo "$fastqPair" | cut -d_ -f3)
+        read1Fastq=$(ls "$fastqPair"_R1*fastq.gz)
+        read2Fastq=$(ls "$fastqPair"_R2*fastq.gz)
 
-		mv "$read1Fastq" "$panel"/"$sampleId"
+        mv "$read1Fastq" "$panel"/"$sampleId"
 		mv "$read2Fastq" "$panel"/"$sampleId"
-	done
+
+    done
 
 	#cp pipeline scripts
 	cp /data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVersion"/*sh "$panel"/"$sampleId"
