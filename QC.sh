@@ -83,7 +83,7 @@ for fastqPair in $(ls Undetermined_S0_*.fastq.gz | cut -d_ -f1-3 | sort | uniq);
     #Align reads to reference genome, retain only proper pairs, sort by coordinate and convert to BAM
     /share/apps/bwa-distros/bwa-0.7.15/bwa mem \
     -M \
-    -R '@RG\tID:'"$passedSeqId"_"$laneId"_"PhiX"'\tSM:'"PhiX"'\tPL:ILLUMINA\tLB:'"$passedSeqId_PhiX" \
+    -R '@RG\tID:'"$passedSeqId"_"$laneId"'_PhiX\tSM:PhiX\tPL:ILLUMINA\tLB:'"$passedSeqId"'_PhiX' \
     -t 6 \
     /data/db/phix/mappers/bwa/genome.fa \
     $(echo "$read1Fastq" | sed 's/\.fastq\.gz/_trimmed\.fastq/g') $(echo "$read2Fastq" | sed 's/\.fastq\.gz/_trimmed\.fastq/g') | \
