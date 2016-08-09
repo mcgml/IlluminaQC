@@ -1,11 +1,13 @@
 #!/bin/bash
 #PBS -l walltime=04:00:00
 #PBS -l ncpus=12
+PBS_O_WORKDIR=(`echo $PBS_O_WORKDIR | sed "s/^\/state\/partition1//" `)
+#cd $PBS_O_WORKDIR
 
 #Description: Quality control for Illumina sequencing data. Not for use with other instruments.
 #Author: Matt Lyon, All Wales Medical Genetics Lab
 #Mode: BY_RUN
-#Usage: qsub -v passedSeqId="160725_M02641_0122_000000000-AU4LF",passedSourceDir="/data/archive/miseq/160725_M02641_0122_000000000-AU4LF" -o /data/results/160725_M02641_0122_000000000-AU4LF -e /data/results/160725_M02641_0122_000000000-AU4LF QC.sh
+#Usage: mkdir /data/results/"$seqId" && cd /data/results/"$seqId" && qsub -v seqId="160725_M02641_0122_000000000-AU4LF",sourceDir="/data/archive/miseq/160725_M02641_0122_000000000-AU4LF" /data/diagnositcs/pipelines/QC/QC-1.0.0/QC.sh
 version="dev"
 
 #TODO get metrics from bcl2fastq output: clusterDensity, clusterDensityPassingFilter, pctPassingFilter, pctGtQ30, highest unmatched index seq
@@ -14,10 +16,11 @@ version="dev"
 #TODO report to trello
 
 ### Set up ###
+passedSeqId="$seqId"
+passedSourceDir="$sourceDir"
 
 #convert bcls to FASTQ
-bcl2fastq -l WARNING -R "$sourceDir" -o /data/results/"$passedSeqId"
-cd /data/results"$passedSeqId"
+/share/apps/bcl2fastq-distros/bcl2fastq-2.17.1.14/bin/bcl2fastq -l WARNING -R "$sourceDir" -o .
 
 #link SampleSheet & runParameters.xml
 ln -s "$passedSourceDir"/SampleSheet.csv
