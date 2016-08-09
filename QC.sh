@@ -20,7 +20,7 @@ passedSeqId="$seqId"
 passedSourceDir="$sourceDir"
 
 #convert bcls to FASTQ
-/share/apps/bcl2fastq-distros/bcl2fastq-2.17.1.14/bin/bcl2fastq -l WARNING -R "$sourceDir" -o .
+bcl2fastq -l WARNING -R "$sourceDir" -o .
 
 #link SampleSheet & runParameters.xml
 ln -s "$passedSourceDir"/SampleSheet.csv
