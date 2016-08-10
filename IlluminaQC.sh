@@ -7,7 +7,7 @@ cd $PBS_O_WORKDIR
 #Description: Quality control for Illumina sequencing data. Not for use with other instruments.
 #Author: Matt Lyon, All Wales Medical Genetics Lab
 #Mode: BY_RUN
-#Usage: mkdir /data/results/"$seqId" && cd /data/results/"$seqId" && qsub -v seqId="160725_M02641_0122_000000000-AU4LF",sourceDir="/data/archive/miseq/160725_M02641_0122_000000000-AU4LF" /data/diagnositcs/pipelines/QC/QC-1.0.0/QC.sh
+#Usage: mkdir /data/results/"$seqId" && cd /data/results/"$seqId" && qsub -v seqId="$seqId",sourceDir="/data/archive/miseq/$seqId" /data/diagnositcs/pipelines/IlluminaQC/IlluminaQC-"$version"/IlluminaQC.sh
 version="dev"
 
 #TODO get metrics from bcl2fastq output: clusterDensity, clusterDensityPassingFilter, pctPassingFilter, pctGtQ30, highest unmatched index seq
@@ -88,17 +88,17 @@ for fastqPair in $(ls Undetermined_S0_*.fastq.gz | cut -d_ -f1-3 | sort | uniq);
     /share/apps/bwa-distros/bwa-0.7.15/bwa mem \
     -M \
     -R '@RG\tID:'"$passedSeqId"_"$laneId"'_PhiX\tSM:PhiX\tPL:ILLUMINA\tLB:'"$passedSeqId"'_PhiX' \
-    -t 6 \
+    -t 8 \
     /data/db/phix/mappers/bwa/genome.fa \
     $(echo "$read1Fastq" | sed 's/\.fastq\.gz/_trimmed\.fastq/g') $(echo "$read2Fastq" | sed 's/\.fastq\.gz/_trimmed\.fastq/g') | \
     /share/apps/samtools-distros/samtools-1.3.1/samtools view -h -f2 | \
-    /share/apps/samtools-distros/samtools-1.3.1/samtools sort -@4 -l0 -o "$passedSeqId"_PhiX_"$laneId"_sorted.bam
+    /share/apps/samtools-distros/samtools-1.3.1/samtools sort -l0 -o "$passedSeqId"_PhiX_"$laneId"_sorted.bam
 
 done
 
 #merge mulitple lanes
 if [ $(ls "$passedSeqId"_PhiX_*_sorted.bam | wc -l | sed 's/^[[:space:]]*//g') -gt 1 ]; then
-    /share/apps/samtools-distros/samtools-1.3.1/samtools merge -u "$passedSeqId"_PhiX_all_sorted.bam "$passedSeqId"_PhiX_*_sorted.bam
+    /share/apps/samtools-distros/samtools-1.3.1/samtools merge -@8 -u "$passedSeqId"_PhiX_all_sorted.bam "$passedSeqId"_PhiX_*_sorted.bam
 else
     mv "$passedSeqId"_PhiX_*_sorted.bam "$passedSeqId"_PhiX_all_sorted.bam
 fi
@@ -117,6 +117,7 @@ COMPRESSION_LEVEL=0
 -R /data/db/phix/Illumina/1.1/genome.fa \
 -I "$passedSeqId"_PhiX_rmdup.bam \
 -o "$passedSeqId"_PhiX_realign.intervals \
+-nt 8 \
 -dt NONE
 
 #Realign around indels
@@ -136,12 +137,14 @@ COMPRESSION_LEVEL=0
 -I "$passedSeqId"_PhiX_realigned.bam \
 -knownSites /data/db/phix/phix.vcf \
 -o "$passedSeqId"_PhiX_BaseRecalibrator.txt \
+-nct 8 \
 -dt NONE
 
 #Calculate pearson correlation
-pearson=$(/share/apps/R-distros/R-3.3.1/bin/Rscript bqsrAnalysis.R -r "$passedSeqId"_PhiX_BaseRecalibrator.txt)
+pearson=$(/share/apps/R-distros/R-3.3.1/bin/Rscript /data/diagnositcs/pipelines/IlluminaQC/IlluminaQC-"$version"/bqsrAnalysis.R -r "$passedSeqId"_PhiX_BaseRecalibrator.txt)
 
 ### Clean up ###
+rm -r tmp
 
 #log run complete
 #/share/apps/node-distros/node-v0.12.7-linux-x64/bin/node \
