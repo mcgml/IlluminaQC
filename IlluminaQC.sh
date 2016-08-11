@@ -10,7 +10,8 @@ cd $PBS_O_WORKDIR
 #Usage: mkdir /data/results/"$seqId" && cd /data/results/"$seqId" && qsub -v seqId="$seqId",sourceDir="/data/archive/miseq/$seqId" /data/diagnositcs/pipelines/IlluminaQC/IlluminaQC-"$version"/IlluminaQC.sh
 version="dev"
 
-#TODO get metrics from bcl2fastq output: clusterDensity, clusterDensityPassingFilter, pctPassingFilter, pctGtQ30, highest unmatched index seq
+#TODO get metrics from bcl2fastq output: clusterDensity, %PF, %GtQ30
+#TODO highest unmatched index seq
 #TODO print metrics
 #TODO qsub if run passes QC then launch analysis
 #TODO report to trello
@@ -18,6 +19,16 @@ version="dev"
 ### Set up ###
 passedSeqId="$seqId"
 passedSourceDir="$sourceDir"
+. /data/diagnositcs/pipelines/IlluminaQC/IlluminaQC-"$version"/variables
+
+#get SAV metrics
+sav=$(/share/apps/interop-distros/interop/build/bin/bin/imaging_table \
+"$sourceDir" | \
+grep -vP "#|Lane|^$" | \
+awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n"\t"pf[i]/n"\t"q30[i]/n; }')
+
+#check SAV metrics
+
 
 #convert bcls to FASTQ
 /usr/local/bin/bcl2fastq -l WARNING -R "$sourceDir" -o .

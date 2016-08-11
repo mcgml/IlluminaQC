@@ -1,0 +1,13 @@
+#Max cluster densities
+maxDenHiSeqTruSeqV3=850
+maxDenHiSeqTruSeqV4=1050
+maxDenHiSeqRapid=1000
+maxDenMiSeqV2=1200
+maxDenMiSeqV3=1400
+
+#Min %Q30
+minQ30HiSeqTruSeqV3=80
+minQ30HiSeqTruSeqV4=80
+minQ30HiSeqRapid=80
+minQ30MiSeqV2=85
+minQ30MiSeqV3=85
