@@ -34,11 +34,6 @@ passedSourceDir="$sourceDir"
 /share/apps/interop-distros/interop/build/bin/bin/imaging_table "$sourceDir" | grep -vP "#|Lane|^$" | \
 awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n"\t"pf[i]/n"\t"q30[i]/n; }') > "$seqId"_sav.txt
 
-#check SAV metrics for every lane
-/share/apps/node-distros/node-v0.12.7-linux-x64/bin/node \
-/data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVersion"/qualifySequencing.js \
-"$seqId"_sav.txt
-
 #convert bcls to FASTQ
 /usr/local/bin/bcl2fastq -l WARNING -R "$sourceDir" -o .
 
@@ -117,17 +112,16 @@ for fastqPair in $(ls Undetermined_S0_*.fastq.gz | cut -d_ -f1-3 | sort | uniq);
 done
 
 #merge mulitple lanes
-if [ $(ls "$passedSeqId"_PhiX_*_sorted.bam | wc -l | sed 's/^[[:space:]]*//g') -gt 1 ]; then
-    /share/apps/samtools-distros/samtools-1.3.1/samtools merge -@8 -u "$passedSeqId"_PhiX_all_sorted.bam "$passedSeqId"_PhiX_*_sorted.bam
-else
-    mv "$passedSeqId"_PhiX_*_sorted.bam "$passedSeqId"_PhiX_all_sorted.bam
-fi
+/share/apps/samtools-distros/samtools-1.3.1/samtools merge \
+-@ 8 \
+-u "$passedSeqId"_PhiX_all_sorted.bam \
+"$passedSeqId"_PhiX_*_sorted.bam
 
 #Mark duplicate reads
 /share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/picard-tools-distros/picard-tools-2.5.0/picard.jar MarkDuplicates \
 INPUT="$passedSeqId"_PhiX_all_sorted.bam \
 OUTPUT="$passedSeqId"_PhiX_rmdup.bam \
-METRICS_FILE="$seqId"_PhiX_MarkDuplicatesMetrics.txt \
+METRICS_FILE="$passedSeqId"_PhiX_MarkDuplicatesMetrics.txt \
 CREATE_INDEX=true \
 COMPRESSION_LEVEL=0
 
