@@ -14,7 +14,16 @@ version="dev"
 #TODO highest unmatched index seq
 #TODO print metrics
 #TODO qsub if run passes QC then launch analysis
-#TODO report to trello
+
+phoneTrello()
+{
+    /share/apps/node-distros/node-v0.12.7-linux-x64/bin/node \
+    /data/diagnostics/scripts/TrelloAPI.js \
+    "$1" "$2"
+}
+
+#Update trello
+phoneTrello "$seqId" "Starting QC ..."
 
 ### Set up ###
 passedSeqId="$seqId"
@@ -22,13 +31,13 @@ passedSourceDir="$sourceDir"
 . /data/diagnositcs/pipelines/IlluminaQC/IlluminaQC-"$version"/variables
 
 #get SAV metrics
-sav=$(/share/apps/interop-distros/interop/build/bin/bin/imaging_table \
-"$sourceDir" | \
-grep -vP "#|Lane|^$" | \
-awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n"\t"pf[i]/n"\t"q30[i]/n; }')
+/share/apps/interop-distros/interop/build/bin/bin/imaging_table "$sourceDir" | grep -vP "#|Lane|^$" | \
+awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n"\t"pf[i]/n"\t"q30[i]/n; }') > "$seqId"_sav.txt
 
-#check SAV metrics
-
+#check SAV metrics for every lane
+/share/apps/node-distros/node-v0.12.7-linux-x64/bin/node \
+/data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVersion"/qualifySequencing.js \
+"$seqId"_sav.txt
 
 #convert bcls to FASTQ
 /usr/local/bin/bcl2fastq -l WARNING -R "$sourceDir" -o .
@@ -156,8 +165,3 @@ pearson=$(/share/apps/R-distros/R-3.3.1/bin/Rscript /data/diagnositcs/pipelines/
 
 ### Clean up ###
 rm -r tmp
-
-#log run complete
-#/share/apps/node-distros/node-v0.12.7-linux-x64/bin/node \
-#/data/diagnostics/scripts/TrelloAPI.js \
-#"$seqId" "$worksheetId"
