@@ -7,7 +7,7 @@ cd $PBS_O_WORKDIR
 #Description: Quality control for Illumina sequencing data. Not for use with other instruments.
 #Author: Matt Lyon, All Wales Medical Genetics Lab
 #Mode: BY_RUN
-#Usage: mkdir /data/results/"$seqId" && cd /data/results/"$seqId" && qsub -v seqId="$seqId",sourceDir="/data/archive/miseq/$seqId" /data/diagnositcs/pipelines/IlluminaQC/IlluminaQC-"$version"/IlluminaQC.sh
+#Usage: mkdir /data/results/"$seqId" && cd /data/results/"$seqId" && qsub -v seqId="$seqId",sourceDir="/data/archive/miseq/$seqId" /data/diagnositcs/pipelines/IlluminaQC/IlluminaQC-"$version"/1_IlluminaQC.sh
 version="dev"
 
 #TODO get metrics from bcl2fastq output: clusterDensity, %PF, %GtQ30
