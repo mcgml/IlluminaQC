@@ -32,7 +32,7 @@ passedSourceDir="$sourceDir"
 
 #get SAV metrics
 /share/apps/interop-distros/interop/build/bin/bin/imaging_table "$sourceDir" | grep -vP "#|Lane|^$" | \
-awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n"\t"pf[i]/n"\t"q30[i]/n; }') > "$seqId"_sav.txt
+awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n"\t"pf[i]/n"\t"q30[i]/n; }' > "$seqId"_sav.txt
 
 #convert bcls to FASTQ
 /usr/local/bin/bcl2fastq -l WARNING -R "$sourceDir" -o .
