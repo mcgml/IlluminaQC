@@ -28,7 +28,7 @@ phoneTrello "$seqId" "Starting QC ..."
 ### Set up ###
 passedSeqId="$seqId"
 passedSourceDir="$sourceDir"
-. /data/diagnositcs/pipelines/IlluminaQC/IlluminaQC-"$version"/variables
+. /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-"$version"/variables
 
 #get SAV metrics
 /share/apps/interop-distros/interop/build/bin/bin/imaging_table "$sourceDir" | grep -vP "#|Lane|^$" | \
