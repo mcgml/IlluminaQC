@@ -10,20 +10,14 @@ cd $PBS_O_WORKDIR
 #Usage: mkdir /data/results/"$seqId" && cd /data/results/"$seqId" && qsub -v seqId="$seqId",sourceDir="/data/archive/miseq/$seqId" /data/diagnositcs/pipelines/IlluminaQC/IlluminaQC-"$version"/1_IlluminaQC.sh
 version="dev"
 
-#TODO get metrics from bcl2fastq output: clusterDensity, %PF, %GtQ30
-#TODO highest unmatched index seq
-#TODO print metrics
+#TODO highest unmatched index seq -- check for sample contamination
 #TODO qsub if run passes QC then launch analysis
-
-phoneTrello()
-{
-    /share/apps/node-distros/node-v0.12.7-linux-x64/bin/node \
-    /data/diagnostics/scripts/TrelloAPI.js \
-    "$1" "$2"
-}
+#TODO get BQSR correlation by lane
 
 #Update trello
-phoneTrello "$seqId" "Starting QC ..."
+/share/apps/node-distros/node-v0.12.7-linux-x64/bin/node \
+/data/diagnostics/scripts/TrelloAPI.js \
+"$seqId" "Starting QC ..."
 
 ### Set up ###
 passedSeqId="$seqId"
