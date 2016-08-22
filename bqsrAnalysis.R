@@ -20,5 +20,4 @@ plot(data$RecalTable1$QualityScore, data$RecalTable1$EmpiricalQuality)
 pearson = cor.test(data$RecalTable1$QualityScore, data$RecalTable1$EmpiricalQuality, method = "pearson", conf.level = 0.95)
 
 #print result
-print(pearson$estimate, digits = 3)
-print(pearson$p.value, digits = 3)
+print(cat(pearson$estimate, pearson$p.value, SEP="\t"))

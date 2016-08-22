@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 #PBS -l walltime=04:00:00
 #PBS -l ncpus=12
 PBS_O_WORKDIR=(`echo $PBS_O_WORKDIR | sed "s/^\/state\/partition1//" `)
