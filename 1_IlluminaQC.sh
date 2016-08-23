@@ -11,22 +11,17 @@ cd $PBS_O_WORKDIR
 version="dev"
 
 #TODO highest unmatched index seq -- check for sample contamination
-#TODO qsub if run passes QC then launch analysis
-#TODO get BQSR correlation by lane
-
-#Update trello
-/share/apps/node-distros/node-v0.12.7-linux-x64/bin/node \
-/data/diagnostics/scripts/TrelloAPI.js \
-"$seqId" "Starting QC ..."
+#TODO phone trello
 
 ### Set up ###
 passedSeqId="$seqId"
 passedSourceDir="$sourceDir"
 . /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-"$version"/variables
 
-#get SAV metrics
+#get SAV metrics & check %Q30 passed QC
 /share/apps/interop-distros/interop/build/bin/bin/imaging_table "$sourceDir" | grep -vP "#|Lane|^$" | \
-awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n"\t"pf[i]/n"\t"q30[i]/n; }' > "$seqId"_sav.txt
+awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n"\t"pf[i]/n"\t"q30[i]/n; }' | \
+tee "$seqId"_sav.txt | awk '{ if (NR > 1 && $4 < 0.8) { print "Run generated insufficient Q30 data"; exit -1 } }'
 
 #convert bcls to FASTQ
 /usr/local/bin/bcl2fastq -l WARNING -R "$sourceDir" -o .
@@ -67,6 +62,9 @@ for variableFile in $(ls *.variables); do
 	#cp pipeline scripts
 	cp /data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVersion"/*sh "$panel"/"$sampleId"
 
+    #record job workdirs
+    find $PWD -type d "$panel"/"$sampleId" >> workdirs.list
+
 done
 
 #move unindexed data into sample folder 
@@ -97,7 +95,7 @@ for fastqPair in $(ls Undetermined_S0_*.fastq.gz | cut -d_ -f1-3 | sort | uniq);
     /share/apps/bwa-distros/bwa-0.7.15/bwa mem \
     -M \
     -R '@RG\tID:'"$passedSeqId"_"$laneId"'_PhiX\tSM:PhiX\tPL:ILLUMINA\tLB:'"$passedSeqId"'_PhiX' \
-    -t 8 \
+    -t 12 \
     /data/db/phix/mappers/bwa/genome.fa \
     $(echo "$read1Fastq" | sed 's/\.fastq\.gz/_trimmed\.fastq/g') $(echo "$read2Fastq" | sed 's/\.fastq\.gz/_trimmed\.fastq/g') | \
     /share/apps/samtools-distros/samtools-1.3.1/samtools view -h -f2 | \
@@ -107,7 +105,7 @@ done
 
 #merge mulitple lanes
 /share/apps/samtools-distros/samtools-1.3.1/samtools merge \
--@ 8 \
+-@ 12 \
 -u "$passedSeqId"_PhiX_all_sorted.bam \
 "$passedSeqId"_PhiX_*_sorted.bam
 
@@ -119,13 +117,19 @@ METRICS_FILE="$passedSeqId"_PhiX_MarkDuplicatesMetrics.txt \
 CREATE_INDEX=true \
 COMPRESSION_LEVEL=0
 
+#check PhiX has been loaded
+if [ $(samtools view -c -F 0x400 "$passedSeqId"_PhiX_rmdup.bam) < 50000 ]; then
+    echo "Insufficient PhiX reads for error modelling"
+    exit -1
+fi
+
 #Identify regions requiring realignment
 /share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx2g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
 -T RealignerTargetCreator \
 -R /data/db/phix/Illumina/1.1/genome.fa \
 -I "$passedSeqId"_PhiX_rmdup.bam \
 -o "$passedSeqId"_PhiX_realign.intervals \
--nt 8 \
+-nt 12 \
 -dt NONE
 
 #Realign around indels
@@ -145,11 +149,24 @@ COMPRESSION_LEVEL=0
 -I "$passedSeqId"_PhiX_realigned.bam \
 -knownSites /data/db/phix/phix.vcf \
 -o "$passedSeqId"_PhiX_BaseRecalibrator.txt \
--nct 8 \
+-nct 12 \
 -dt NONE
 
-#Calculate pearson correlation
-pearson=$(/share/apps/R-distros/R-3.3.1/bin/Rscript /data/diagnositcs/pipelines/IlluminaQC/IlluminaQC-"$version"/bqsrAnalysis.R -r "$passedSeqId"_PhiX_BaseRecalibrator.txt)
+#Calculate pearson correlation with 95% confidence
+/share/apps/R-distros/R-3.3.1/bin/Rscript \
+/data/diagnositcs/pipelines/IlluminaQC/IlluminaQC-"$version"/bqsrAnalysis.R \
+-r "$passedSeqId"_PhiX_BaseRecalibrator.txt | \
+tee "$passedSeqId"_bqsr_pearson.txt | \
+awk '{if ($1 < 0.95) { print "Poor correlation between reported and emperical Q scores"; exit -1; }}'
 
 ### Clean up ###
 rm -r tmp
+rm *.fastq "$passedSeqId"_PhiX_*_sorted.bam "$passedSeqId"_PhiX_*_sorted.bai
+rm "$passedSeqId"_PhiX_MarkDuplicatesMetrics.txt
+rm "$passedSeqId"_PhiX_realign.intervals
+
+#launch analyses
+for i in $(sort workdirs.list | uniq); do
+    cd "$i"
+    qsub 1_*.sh
+done
