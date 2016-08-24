@@ -68,7 +68,7 @@ for variableFile in $(ls *.variables); do
 	cp /data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVersion"/*sh "$panel"/"$sampleId"
 
     #record job workdirs
-    find $PWD -type d "$panel"/"$sampleId" >> workdirs.list
+    echo $PWD/"$panel"/"$sampleId" >> workdirs.list
 
 done
 
