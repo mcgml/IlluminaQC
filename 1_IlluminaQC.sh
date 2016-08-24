@@ -11,6 +11,7 @@ cd $PBS_O_WORKDIR
 version="dev"
 
 #TODO highest unmatched index seq -- check for sample contamination
+#TODO update interop
 
 #log with Trello
 /share/apps/node-distros/node-v4.4.7-linux-x64/bin/node \
@@ -122,7 +123,7 @@ CREATE_INDEX=true \
 COMPRESSION_LEVEL=0
 
 #check PhiX has been loaded
-if [ $(samtools view -c -F 0x400 "$passedSeqId"_PhiX_rmdup.bam) < 50000 ]; then
+if [ $(/share/apps/samtools-distros/samtools-1.3.1/samtools view -c -F 0x400 "$passedSeqId"_PhiX_rmdup.bam) < 50000 ]; then
     echo "Insufficient PhiX reads for error modelling"
     exit -1
 fi
