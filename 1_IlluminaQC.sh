@@ -166,9 +166,7 @@ awk '{if ($1 < 0.95) { print "Poor correlation between reported and emperical Q 
 
 ### Clean up ###
 rm -r tmp
-rm *.fastq "$passedSeqId"_PhiX_*_sorted.bam "$passedSeqId"_PhiX_*_sorted.bai
-rm "$passedSeqId"_PhiX_MarkDuplicatesMetrics.txt
-rm "$passedSeqId"_PhiX_realign.intervals
+rm *.fastq "$passedSeqId"_PhiX_*_sorted.bam "$passedSeqId"_PhiX_MarkDuplicatesMetrics.txt "$passedSeqId"_PhiX_realign.intervals
 
 #log with Trello
 /share/apps/node-distros/node-v4.4.7-linux-x64/bin/node \
