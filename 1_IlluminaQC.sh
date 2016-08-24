@@ -162,7 +162,7 @@ fi
 /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-"$version"/bqsrAnalysis.R \
 -r "$passedSeqId"_PhiX_BaseRecalibrator.txt | \
 tee "$passedSeqId"_bqsr_pearson.txt | \
-awk '{if ($1 < 0.95) { print "Poor correlation between reported and emperical Q scores"; exit -1; }}'
+awk '{if ($1 < 0.95) print "Poor correlation between reported and emperical Q scores"; exit -1; }'
 
 ### Clean up ###
 rm -r tmp
