@@ -25,7 +25,7 @@ passedSourceDir="$sourceDir"
 
 #get SAV metrics & check %Q30 passed QC
 /share/apps/interop-distros/interop/build/bin/bin/imaging_table "$sourceDir" | grep -vP "#|Lane|^$" | \
-awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n"\t"pf[i]/n"\t"q30[i]/n; }' | \
+awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n[$1]++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n[i]"\t"pf[i]/n[i]"\t"q30[i]/n[i]; }' | \
 tee "$seqId"_sav.txt | awk '{ if (NR > 1 && $4 < 80) { print "Run generated insufficient Q30 data"; exit -1 } }'
 
 #convert bcls to FASTQ
