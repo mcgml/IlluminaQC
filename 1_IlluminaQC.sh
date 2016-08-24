@@ -11,7 +11,11 @@ cd $PBS_O_WORKDIR
 version="dev"
 
 #TODO highest unmatched index seq -- check for sample contamination
-#TODO phone trello
+
+#log with Trello
+/share/apps/node-distros/node-v4.4.7-linux-x64/bin/node \
+/data/diagnostics/scripts/TrelloAPI.js \
+"$seqId" "Starting QC"
 
 ### Set up ###
 passedSeqId="$seqId"
