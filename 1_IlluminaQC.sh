@@ -36,7 +36,7 @@ ln -s "$passedSourceDir"/SampleSheet.csv
 ln -s "$passedSourceDir"/?unParameters.xml
 
 #Make variable files
-/share/apps/jre-distros/jre1.8.0_101/bin/java -jar /data/diagnostics/apps/MakeVariableFiles-2.0.0/MakeVariableFiles-2.0.0.jar \
+/share/apps/jre-distros/jre1.8.0_101/bin/java -jar /data/diagnostics/apps/MakeVariableFiles/MakeVariableFiles-2.1.0.jar \
 SampleSheet.csv \
 ?unParameters.xml
 
