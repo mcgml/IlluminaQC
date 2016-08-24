@@ -123,8 +123,8 @@ CREATE_INDEX=true \
 COMPRESSION_LEVEL=0
 
 #check PhiX has been loaded
-if [ $(/share/apps/samtools-distros/samtools-1.3.1/samtools view -c -F 0x400 "$passedSeqId"_PhiX_rmdup.bam) < 50000 ]; then
-    echo "Insufficient PhiX reads for error modelling"
+if [ $(/share/apps/samtools-distros/samtools-1.3.1/samtools view -c -F 0x400 "$passedSeqId"_PhiX_rmdup.bam) -lt 10000 ]; then
+    echo "Phix has not been loaded. Cannot compare emperical vs predicted error rate"
     exit -1
 fi
 
@@ -159,7 +159,7 @@ fi
 
 #Calculate pearson correlation with 95% confidence
 /share/apps/R-distros/R-3.3.1/bin/Rscript \
-/data/diagnositcs/pipelines/IlluminaQC/IlluminaQC-"$version"/bqsrAnalysis.R \
+/data/diagnostics/pipelines/IlluminaQC/IlluminaQC-"$version"/bqsrAnalysis.R \
 -r "$passedSeqId"_PhiX_BaseRecalibrator.txt | \
 tee "$passedSeqId"_bqsr_pearson.txt | \
 awk '{if ($1 < 0.95) { print "Poor correlation between reported and emperical Q scores"; exit -1; }}'
@@ -174,7 +174,7 @@ rm *.fastq "$passedSeqId"_PhiX_*_sorted.bam "$passedSeqId"_PhiX_MarkDuplicatesMe
 "$seqId" "Passed QC. Starting analysis"
 
 #launch analyses
-for i in $(sort workdirs.list | uniq); do
+for i in $(sort ../workdirs.list | uniq); do
     cd "$i"
     qsub 1_*.sh
 done
