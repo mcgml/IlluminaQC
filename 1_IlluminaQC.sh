@@ -35,7 +35,7 @@ ln -s "$passedSourceDir"/SampleSheet.csv
 ln -s "$passedSourceDir"/?unParameters.xml
 
 #Make variable files
-/share/apps/jre-distros/jre1.8.0_71/bin/java -jar /data/diagnostics/apps/MakeVariableFiles-2.0.0/MakeVariableFiles-2.0.0.jar \
+/share/apps/jre-distros/jre1.8.0_101/bin/java -jar /data/diagnostics/apps/MakeVariableFiles-2.0.0/MakeVariableFiles-2.0.0.jar \
 SampleSheet.csv \
 ?unParameters.xml
 
@@ -114,7 +114,7 @@ done
 "$passedSeqId"_PhiX_*_sorted.bam
 
 #Mark duplicate reads
-/share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/picard-tools-distros/picard-tools-2.5.0/picard.jar MarkDuplicates \
+/share/apps/jre-distros/jre1.8.0_101/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/picard-tools-distros/picard-tools-2.5.0/picard.jar MarkDuplicates \
 INPUT="$passedSeqId"_PhiX_all_sorted.bam \
 OUTPUT="$passedSeqId"_PhiX_rmdup.bam \
 METRICS_FILE="$passedSeqId"_PhiX_MarkDuplicatesMetrics.txt \
@@ -128,7 +128,7 @@ if [ $(samtools view -c -F 0x400 "$passedSeqId"_PhiX_rmdup.bam) < 50000 ]; then
 fi
 
 #Identify regions requiring realignment
-/share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx2g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
+/share/apps/jre-distros/jre1.8.0_101/bin/java -Djava.io.tmpdir=tmp -Xmx2g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
 -T RealignerTargetCreator \
 -R /data/db/phix/Illumina/1.1/genome.fa \
 -I "$passedSeqId"_PhiX_rmdup.bam \
@@ -137,7 +137,7 @@ fi
 -dt NONE
 
 #Realign around indels
-/share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
+/share/apps/jre-distros/jre1.8.0_101/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
 -T IndelRealigner \
 -R /data/db/phix/Illumina/1.1/genome.fa \
 -targetIntervals "$passedSeqId"_PhiX_realign.intervals \
@@ -147,7 +147,7 @@ fi
 -dt NONE
 
 #Get quality vs error rate data
-/share/apps/jre-distros/jre1.8.0_71/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
+/share/apps/jre-distros/jre1.8.0_101/bin/java -Djava.io.tmpdir=tmp -Xmx8g -jar /share/apps/GATK-distros/GATK_3.6.0/GenomeAnalysisTK.jar \
 -T BaseRecalibrator \
 -R /data/db/phix/Illumina/1.1/genome.fa \
 -I "$passedSeqId"_PhiX_realigned.bam \
