@@ -78,9 +78,8 @@ for variableFile in $(ls *.variables); do
 
     #merge lane ubams
     /share/apps/samtools-distros/samtools-1.3.1/samtools merge \
-    -l9 \
     -@12 \
-    "$sampleId"/"$seqId"_"$sampleId"_"$laneId"_unaligned.bam \
+    "$sampleId"/"$seqId"_"$sampleId"_unaligned.bam \
     "$seqId"_"$sampleId"_*_unaligned.bam
 
     #make project folders
@@ -105,7 +104,7 @@ rm *.fastq.gz *_unaligned.bam
 
 #get SAV metrics & check %Q30 passed QC
 /share/apps/interop-distros/interop-1.0.11/build/bin/usr/local/bin/imaging_table "$passedSourceDir" | grep -vP "#|Lane|^$" | \
-awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$16; n[$1]++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n[i]"\t"pf[i]/n[i]"\t"q30[i]/n[i]; }' | \
+awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n[$1]++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n[i]"\t"pf[i]/n[i]"\t"q30[i]/n[i]; }' | \
 tee "$passedSeqId"_sav.txt | awk '{ if (NR > 1 && $4 < 80) { print "Run generated insufficient Q30 data"; phoneTrello "$passedSeqId" "Failed QC. Insufficient data"; exit -1 } }'
 
 ### Launch analysis ###
