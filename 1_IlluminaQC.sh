@@ -79,6 +79,7 @@ for variableFile in $(ls *.variables); do
     #merge lane ubams
     /share/apps/samtools-distros/samtools-1.3.1/samtools merge \
     -l9 \
+    -@12 \
     "$sampleId"/"$seqId"_"$sampleId"_"$laneId"_unaligned.bam \
     "$seqId"_"$sampleId"_*_unaligned.bam
 
