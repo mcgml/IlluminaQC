@@ -89,8 +89,8 @@ for variableFile in $(ls *.variables); do
     ln -s "$sampleId"/"$seqId"_"$sampleId"_unaligned.bam /data/results/"$seqId"/"$panel"/"$sampleId"
     ln -s "$variableFile" /data/results/"$seqId"/"$panel"/"$sampleId"
     
-    if [[ ! -z "$pipelineVerison" && ! -z "$pipelineName" ]]; then
-        cp /data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVerison"/*sh /data/results/"$seqId"/"$panel"/"$sampleId"
+    if [[ ! -z "$pipelineVersion" && ! -z "$pipelineName" ]]; then
+        cp /data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVersion"/*sh /data/results/"$seqId"/"$panel"/"$sampleId"
         echo /data/results/"$seqId"/"$panel"/"$sampleId" >> ../workdirs.list
     fi
 
