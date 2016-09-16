@@ -46,8 +46,9 @@ mkdir /data/results/"$passedSeqId"
 
 #move fastq & variable files into project folders
 for variableFile in $(ls *.variables); do
-	
-	#load variables into scope
+
+{
+    #load variables into scope
 	. "$variableFile"
 
     #make sample folder
@@ -83,13 +84,19 @@ for variableFile in $(ls *.variables); do
     USE_THREADING=true
 
     #make project folders
+    if [[ -z "$panel" || -z "$pipelineVerison" || -z "$pipelineName" ]]; then
+        continue;
+    fi
+
     mkdir -p /data/results/"$seqId"/"$panel"
     mkdir /data/results/"$seqId"/"$panel"/"$sampleId"
     ln -s "$sampleId"/"$seqId"_"$sampleId"_unaligned.bam /data/results/"$seqId"/"$panel"/"$sampleId"
     ln -s "$variableFile" /data/results/"$seqId"/"$panel"/"$sampleId"
     cp /data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVerison"/*sh /data/results/"$seqId"/"$panel"/"$sampleId"
     echo /data/results/"$seqId"/"$panel"/"$sampleId" >> ../workdirs.list
-    
+
+}
+
 done
 
 ### Clean up ###
