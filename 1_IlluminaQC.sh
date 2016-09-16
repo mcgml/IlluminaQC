@@ -87,6 +87,9 @@ for variableFile in $(ls *.variables); do
     mkdir /data/results/"$seqId"/"$panel"/"$sampleId"
     ln -s "$sampleId"/"$seqId"_"$sampleId"_unaligned.bam /data/results/"$seqId"/"$panel"/"$sampleId"
     ln -s "$variableFile" /data/results/"$seqId"/"$panel"/"$sampleId"
+
+    #clean up
+    rm "$sampleId"_*.fastq.gz "$seqId"_"$sampleId"_*_unaligned.bam 
     
     if [[ ! -z "$pipelineVersion" && ! -z "$pipelineName" ]]; then
         cp /data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVersion"/*sh /data/results/"$seqId"/"$panel"/"$sampleId"
@@ -96,9 +99,6 @@ for variableFile in $(ls *.variables); do
 }
 
 done
-
-### Clean up ###
-rm *.fastq.gz *_unaligned.bam
 
 ### QC ###
 
