@@ -77,11 +77,10 @@ for variableFile in $(ls *.variables); do
     done
 
     #merge lane ubams
-    /share/apps/jre-distros/jre1.8.0_101/bin/java -Djava.io.tmpdir=/state/partition1/tmpdir -Xmx4g -jar /share/apps/picard-tools-distros/picard-tools-2.5.0/picard.jar MergeSamFiles \
-    I="$seqId"_"$sampleId"_*_unaligned.bam \
-    O="$sampleId"/"$seqId"_"$sampleId"_unaligned.bam \
-    SORT_ORDER=queryname \
-    USE_THREADING=true
+    /share/apps/samtools-distros/samtools-1.3.1/samtools merge \
+    -l9 \
+    "$sampleId"/"$seqId"_"$sampleId"_"$laneId"_unaligned.bam \
+    "$seqId"_"$sampleId"_*_unaligned.bam
 
     #make project folders
     mkdir -p /data/results/"$seqId"/"$panel"
@@ -99,7 +98,7 @@ for variableFile in $(ls *.variables); do
 done
 
 ### Clean up ###
-rm *.fastq.gz *unaligned.bam
+rm *.fastq.gz *_unaligned.bam
 
 ### QC ###
 
