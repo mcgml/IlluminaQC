@@ -85,15 +85,15 @@ for variableFile in $(ls *.variables); do
     #make project folders
     mkdir -p /data/results/"$seqId"/"$panel"
     mkdir /data/results/"$seqId"/"$panel"/"$sampleId"
-    ln -s "$sampleId"/"$seqId"_"$sampleId"_unaligned.bam /data/results/"$seqId"/"$panel"/"$sampleId"
-    ln -s "$variableFile" /data/results/"$seqId"/"$panel"/"$sampleId"
+    ln -s $PWD/"$sampleId"/"$seqId"_"$sampleId"_unaligned.bam /data/results/"$seqId"/"$panel"/"$sampleId"
+    ln -s $PWD/"$variableFile" /data/results/"$seqId"/"$panel"/"$sampleId"
 
     #clean up
     rm "$sampleId"_*.fastq.gz "$seqId"_"$sampleId"_*_unaligned.bam 
     
     if [[ ! -z "$pipelineVersion" && ! -z "$pipelineName" ]]; then
         cp /data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVersion"/*sh /data/results/"$seqId"/"$panel"/"$sampleId"
-        echo /data/results/"$seqId"/"$panel"/"$sampleId" >> ../workdirs.list
+        echo /data/results/"$seqId"/"$panel"/"$sampleId" >> workdirs.list
     fi
 
 }
