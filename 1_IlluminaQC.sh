@@ -89,7 +89,7 @@ for variableFile in $(ls *.variables); do
         /share/apps/fastqc-distros/fastqc_v0.11.5/fastqc -d /state/partition1/tmpdir --threads 12 --extract -o data/"$sampleId" "$read2Fastq"
 
         #check FASTQ output
-        if [ countQCFlagFails "$(echo $read1Fastq | tr '.fastq.gz' '_fastqc')/summary.txt" -gt 0 ] || [ countQCFlagFails "$(echo $read2Fastq | tr '.fastq.gz' '_fastqc')/summary.txt" -gt 0 ]; then
+        if [ countQCFlagFails data/"$sampleId"/"$(echo $read1Fastq | sed 's/\.fastq\.gz/_fastqc/g')/summary.txt" -gt 0 ] || [ countQCFlagFails data/"$sampleId"/"$(echo $read2Fastq | sed 's/\.fastq\.gz/_fastqc/g')/summary.txt" -gt 0 -gt 0 ]; then
             failed=true
         fi
 
@@ -97,7 +97,7 @@ for variableFile in $(ls *.variables); do
     
     #merge lane ubams
     /share/apps/jre-distros/jre1.8.0_101/bin/java -Djava.io.tmpdir=/state/partition1/tmpdir -Xmx8g -jar /share/apps/picard-tools-distros/picard-tools-2.5.0/picard.jar MergeSamFiles \
-    $(ls "$seqId"_"$sampleId"_*_unaligned.bam | sed 's/^/--bam /' | tr '\n' ' ') \
+    $(ls "$seqId"_"$sampleId"_*_unaligned.bam | sed 's/^/-I=/' | tr '\n' ' ') \
     SORT_ORDER=queryname \
     USE_THREADING=true \
     MAX_RECORDS_IN_RAM=5000000 \
