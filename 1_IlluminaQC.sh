@@ -53,7 +53,7 @@ for variableFile in $(ls *.variables); do
 
 {
 
-    #load variables into scope
+    #load variables into local scope
 	. "$variableFile"
 
     #record pass/fail using FASTQC
@@ -75,12 +75,14 @@ for variableFile in $(ls *.variables); do
         /share/apps/jre-distros/jre1.8.0_101/bin/java -Djava.io.tmpdir=/state/partition1/tmpdir -Xmx8g -jar /share/apps/picard-tools-distros/picard-tools-2.5.0/picard.jar FastqToSam \
         F1="$read1Fastq" \
         F2="$read2Fastq" \
+        QUALITY_FORMAT=standard \
         O="$seqId"_"$sampleId"_"$laneId"_unaligned.bam \
         READ_GROUP_NAME="$seqId"_"$laneId"_"$sampleId" \
         SAMPLE_NAME="$sampleId" \
         LIBRARY_NAME="$worklistId"_"$panel"_"$sampleId" \
         PLATFORM_UNIT="$seqId"_"$laneId" \
         PLATFORM="ILLUMINA" \
+        SORT_ORDER=queryname \
         MAX_RECORDS_IN_RAM=5000000 \
         TMP_DIR=/state/partition1/tmpdir
 
@@ -106,7 +108,7 @@ for variableFile in $(ls *.variables); do
     O=data/"$sampleId"/"$seqId"_"$sampleId"_unaligned.bam
 
     #clean up
-    rm "$sampleId"_*.fastq.gz "$seqId"_"$sampleId"_*_unaligned.bam
+    rm "$sampleId"_*.fastq.gz "$seqId"_"$sampleId"_*_unaligned.bam data/*/*_fastqc.html data/*/*_fastqc.zip
 
     #skip failed samples
     if [ "$failed" = true ] ; then
