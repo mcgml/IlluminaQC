@@ -2,14 +2,14 @@
 set -euo pipefail
 #PBS -l walltime=12:00:00
 #PBS -l ncpus=12
+PBS_O_WORKDIR=(`echo $PBS_O_WORKDIR | sed "s/^\/state\/partition1//" `)
+cd $PBS_O_WORKDIR
 
-#Description: Quality control for paired-end Illumina sequencing data. Not for use with other instruments.
+#Description: Quality control for paired-end Illumina sequencing data. Not for use with other instruments or run configurations.
 #Author: Matt Lyon, All Wales Medical Genetics Lab
 #Mode: BY_RUN
-#Usage: qsub -v sourceDir="/data/archive/miseq/seqId" /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-"$version"/1_IlluminaQC.sh
+#Usage: qsub -v sourceDir=/data/archive/miseq/[run] /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-"$version"/1_IlluminaQC.sh
 version="dev"
-
-#TODO highest unmatched index seq -- check for sample contamination
 
 phoneTrello() {
     /share/apps/node-distros/node-v4.4.7-linux-x64/bin/node \
@@ -17,17 +17,22 @@ phoneTrello() {
     "$1" "$2" #seqId & message
 }
 
+countQCFlagFails() {
+    grep -E "Basic Statistics|Per base sequence quality|Per tile sequence quality|Per sequence quality scores|Per base N content" "$1" | \
+    grep -v ^PASS | \
+    wc -l | \
+    sed 's/^[[:space:]]*//g'
+}
+
 ### Preparation ###
 
-#make run folders and change dir
-seqId=$(basename "$sourceDir")
-mkdir /data/archive/ubam/"$seqId"
-PBS_O_WORKDIR=/data/archive/ubam/"$seqId"
-cd $PBS_O_WORKDIR
-mkdir data
-
 #log with Trello
-phoneTrello "$seqId" "Starting QC"
+phoneTrello $(basename "$sourceDir") "Starting QC"
+
+#make run folders and change dir
+mkdir /data/archive/ubam/$(basename "$sourceDir")
+cd /data/archive/ubam/$(basename "$sourceDir")
+mkdir data
 
 #convert BCLs to FASTQ
 /usr/local/bin/bcl2fastq -l WARNING -R "$sourceDir" -o .
@@ -47,8 +52,12 @@ RunParameters.xml
 for variableFile in $(ls *.variables); do
 
 {
+
     #load variables into scope
 	. "$variableFile"
+
+    #record pass/fail using FASTQC
+    failed=false
 
     #make sample folder
     mkdir data/"$sampleId"
@@ -76,8 +85,13 @@ for variableFile in $(ls *.variables); do
         TMP_DIR=/state/partition1/tmpdir
 
         #fastqc
-        /share/apps/fastqc-distros/fastqc_v0.11.5/fastqc --threads 12 --extract -o data/"$sampleId"/"$seqId"_"$laneId"_"$sampleId"_Read1 "$read1Fastq"
-        /share/apps/fastqc-distros/fastqc_v0.11.5/fastqc --threads 12 --extract -o data/"$sampleId"/"$seqId"_"$laneId"_"$sampleId"_Read2 "$read2Fastq"
+        /share/apps/fastqc-distros/fastqc_v0.11.5/fastqc -d /state/partition1/tmpdir --threads 12 --extract -o data/"$sampleId" "$read1Fastq"
+        /share/apps/fastqc-distros/fastqc_v0.11.5/fastqc -d /state/partition1/tmpdir --threads 12 --extract -o data/"$sampleId" "$read2Fastq"
+
+        #check FASTQ output
+        if [ countQCFlagFails "$(echo $read1Fastq | tr '.fastq.gz' '_fastqc')/summary.txt" -gt 0 ] || [ countQCFlagFails "$(echo $read2Fastq | tr '.fastq.gz' '_fastqc')/summary.txt" -gt 0 ]; then
+            failed=true
+        fi
 
     done
     
@@ -93,6 +107,12 @@ for variableFile in $(ls *.variables); do
 
     #clean up
     rm "$sampleId"_*.fastq.gz "$seqId"_"$sampleId"_*_unaligned.bam
+
+    #skip failed samples
+    if [ "$failed" = true ] ; then
+        phoneTrello "$seqId" "$sampleId has failed QC"
+        continue;
+    fi
     
     #analysis
     if [[ ! -z "$pipelineVersion" && ! -z "$pipelineName" && ! -z "$panel" ]]; then
@@ -123,10 +143,10 @@ done
 #get SAV metrics & check %Q30 passed QC
 /share/apps/interop-distros/interop-1.0.11/build/bin/usr/local/bin/imaging_table "$sourceDir" | grep -vP "#|Lane|^$" | \
 awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n[$1]++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n[i]"\t"pf[i]/n[i]"\t"q30[i]/n[i]; }' | \
-tee "$seqId"_sav.txt | awk '{ if (NR > 1 && $4 < 80) { print "Run generated insufficient Q30 data"; phoneTrello "$seqId" "Failed QC. Insufficient data"; exit -1 } }'
+tee $(basename "$sourceDir")_sav.txt | awk '{ if (NR > 1 && $4 < 80) { print "Run generated insufficient Q30 data"; phoneTrello $(basename "$sourceDir") "Failed QC. Insufficient data"; exit -1 } }'
 
 ### Launch analysis ###
-phoneTrello "$seqId" "Passed QC. Launching analysis..."
+phoneTrello $(basename "$sourceDir") "Passed QC. Launching analysis..."
 for i in $(sort workdirs.list | uniq); do
     bash -c cd "$i" && qsub 1_*.sh
 done
