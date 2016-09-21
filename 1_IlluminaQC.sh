@@ -89,7 +89,7 @@ for variableFile in $(ls *.variables); do
         /share/apps/fastqc-distros/fastqc_v0.11.5/fastqc -d /state/partition1/tmpdir --threads 12 --extract -o data/"$sampleId" "$read2Fastq"
 
         #check FASTQ output
-        if [ countQCFlagFails data/"$sampleId"/"$(echo $read1Fastq | sed 's/\.fastq\.gz/_fastqc/g')/summary.txt" -gt 0 ] || [ countQCFlagFails data/"$sampleId"/"$(echo $read2Fastq | sed 's/\.fastq\.gz/_fastqc/g')/summary.txt" -gt 0 -gt 0 ]; then
+        if [ $(countQCFlagFails data/"$sampleId"/"$(echo $read1Fastq | sed 's/\.fastq\.gz/_fastqc/g')/summary.txt") -gt 0 ] || [ $(countQCFlagFails data/"$sampleId"/"$(echo $read2Fastq | sed 's/\.fastq\.gz/_fastqc/g')/summary.txt") -gt 0 ]; then
             failed=true
         fi
 
