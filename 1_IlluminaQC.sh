@@ -8,7 +8,7 @@ cd $PBS_O_WORKDIR
 #Description: Quality control for paired-end Illumina sequencing data. Not for use with other instruments or run configurations.
 #Author: Matt Lyon, All Wales Medical Genetics Lab
 #Mode: BY_RUN
-#Usage: qsub -v sourceDir=/data/archive/miseq/"$seqId" /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-"$version"/1_IlluminaQC.sh
+#Usage: mkdir /data/archive/ubam/"$seqId" && cd /data/archive/ubam/"$seqId" && qsub -v sourceDir=/data/archive/miseq/"$seqId" /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-"$version"/1_IlluminaQC.sh
 version="dev"
 
 phoneTrello() {
@@ -29,9 +29,7 @@ countQCFlagFails() {
 #log with Trello
 phoneTrello $(basename "$sourceDir") "Starting QC"
 
-#make run folders and change dir
-mkdir /data/archive/ubam/$(basename "$sourceDir")
-cd /data/archive/ubam/$(basename "$sourceDir")
+#make output folder and change dir
 mkdir Data
 
 #convert BCLs to FASTQ
