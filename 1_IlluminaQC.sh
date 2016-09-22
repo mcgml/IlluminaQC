@@ -8,7 +8,7 @@ cd $PBS_O_WORKDIR
 #Description: Quality control for paired-end Illumina sequencing data. Not for use with other instruments or run configurations.
 #Author: Matt Lyon, All Wales Medical Genetics Lab
 #Mode: BY_RUN
-#Usage: qsub -v sourceDir=/data/archive/miseq/[run] /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-"$version"/1_IlluminaQC.sh
+#Usage: qsub -v sourceDir=/data/archive/miseq/"$seqId" /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-"$version"/1_IlluminaQC.sh
 version="dev"
 
 phoneTrello() {
@@ -32,10 +32,11 @@ phoneTrello $(basename "$sourceDir") "Starting QC"
 #make run folders and change dir
 mkdir /data/archive/ubam/$(basename "$sourceDir")
 cd /data/archive/ubam/$(basename "$sourceDir")
-mkdir data
+mkdir Data
 
 #convert BCLs to FASTQ
 /usr/local/bin/bcl2fastq -l WARNING -R "$sourceDir" -o .
+rm Undetermined_S0_*.fastq.gz
 
 #copy files to keep to long-term storage
 cp "$sourceDir"/SampleSheet.csv .
@@ -51,17 +52,16 @@ RunParameters.xml
 #move fastq & variable files into project folders
 for variableFile in $(ls *.variables); do
 
-{
+    #reset variables
+    unset sampleId fastqPair laneId read1Fastq read2Fastq seqId worklistId pipelineVersion pipelineName panel
+    failed=false
 
     #load variables into local scope
 	. "$variableFile"
 
-    #record pass/fail using FASTQC
-    failed=false
-
     #make sample folder
-    mkdir data/"$sampleId"
-    mv "$variableFile" data/"$sampleId"
+    mkdir Data/"$sampleId"
+    mv "$variableFile" Data/"$sampleId"
 
 	#convert FASTQ to uBAM with RGIDs
     for fastqPair in $(ls "$sampleId"_*.fastq.gz | cut -d_ -f1-3 | sort | uniq); do
@@ -75,7 +75,6 @@ for variableFile in $(ls *.variables); do
         /share/apps/jre-distros/jre1.8.0_101/bin/java -Djava.io.tmpdir=/state/partition1/tmpdir -Xmx8g -jar /share/apps/picard-tools-distros/picard-tools-2.5.0/picard.jar FastqToSam \
         F1="$read1Fastq" \
         F2="$read2Fastq" \
-        QUALITY_FORMAT=standard \
         O="$seqId"_"$sampleId"_"$laneId"_unaligned.bam \
         READ_GROUP_NAME="$seqId"_"$laneId"_"$sampleId" \
         SAMPLE_NAME="$sampleId" \
@@ -87,11 +86,11 @@ for variableFile in $(ls *.variables); do
         TMP_DIR=/state/partition1/tmpdir
 
         #fastqc
-        /share/apps/fastqc-distros/fastqc_v0.11.5/fastqc -d /state/partition1/tmpdir --threads 12 --extract -o data/"$sampleId" "$read1Fastq"
-        /share/apps/fastqc-distros/fastqc_v0.11.5/fastqc -d /state/partition1/tmpdir --threads 12 --extract -o data/"$sampleId" "$read2Fastq"
+        /share/apps/fastqc-distros/fastqc_v0.11.5/fastqc -d /state/partition1/tmpdir --threads 12 --extract -o Data/"$sampleId" "$read1Fastq"
+        /share/apps/fastqc-distros/fastqc_v0.11.5/fastqc -d /state/partition1/tmpdir --threads 12 --extract -o Data/"$sampleId" "$read2Fastq"
 
         #check FASTQ output
-        if [ $(countQCFlagFails data/"$sampleId"/"$(echo $read1Fastq | sed 's/\.fastq\.gz/_fastqc/g')/summary.txt") -gt 0 ] || [ $(countQCFlagFails data/"$sampleId"/"$(echo $read2Fastq | sed 's/\.fastq\.gz/_fastqc/g')/summary.txt") -gt 0 ]; then
+        if [ $(countQCFlagFails Data/"$sampleId"/"$(echo $read1Fastq | sed 's/\.fastq\.gz/_fastqc/g')/summary.txt") -gt 0 ] || [ $(countQCFlagFails Data/"$sampleId"/"$(echo $read2Fastq | sed 's/\.fastq\.gz/_fastqc/g')/summary.txt") -gt 0 ]; then
             failed=true
         fi
 
@@ -105,10 +104,10 @@ for variableFile in $(ls *.variables); do
     MAX_RECORDS_IN_RAM=5000000 \
     TMP_DIR=/state/partition1/tmpdir \
     CREATE_MD5_FILE=true \
-    O=data/"$sampleId"/"$seqId"_"$sampleId"_unaligned.bam
+    O=Data/"$sampleId"/"$seqId"_"$sampleId"_unaligned.bam
 
     #clean up
-    rm "$sampleId"_*.fastq.gz "$seqId"_"$sampleId"_*_unaligned.bam data/*/*_fastqc.html data/*/*_fastqc.zip
+    rm "$sampleId"_*.fastq.gz "$seqId"_"$sampleId"_*_unaligned.bam Data/*/*_fastqc.html Data/*/*_fastqc.zip
 
     #skip failed samples
     if [ "$failed" = true ] ; then
@@ -125,8 +124,8 @@ for variableFile in $(ls *.variables); do
 
         #make sample folder & link uBam
         mkdir /data/results/"$seqId"/"$panel"/"$sampleId"
-        ln -s $PWD/data/"$sampleId"/"$seqId"_"$sampleId"_unaligned.bam /data/results/"$seqId"/"$panel"/"$sampleId"
-        ln -s $PWD/data/"$variableFile" /data/results/"$seqId"/"$panel"/"$sampleId"
+        ln -s $PWD/Data/"$sampleId"/"$seqId"_"$sampleId"_unaligned.bam /data/results/"$seqId"/"$panel"/"$sampleId"
+        ln -s $PWD/Data/"$variableFile" /data/results/"$seqId"/"$panel"/"$sampleId"
 
         #copy scripts
         cp /data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVersion"/*sh /data/results/"$seqId"/"$panel"/"$sampleId"
@@ -135,8 +134,6 @@ for variableFile in $(ls *.variables); do
         echo /data/results/"$seqId"/"$panel"/"$sampleId" >> workdirs.list
 
     fi
-
-}
 
 done
 
