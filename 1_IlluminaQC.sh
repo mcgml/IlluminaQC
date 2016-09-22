@@ -116,7 +116,7 @@ for variableFile in $(ls *.variables); do
     fi
     
     #analysis
-    if [[ ! -z "$pipelineVersion" && ! -z "$pipelineName" && ! -z "$panel" ]]; then
+    if [[ ! -z ${pipelineVersion-} && ! -z ${pipelineName-} && ! -z ${panel-} ]]; then
 
         #make project folders
         mkdir -p /data/results/"$seqId"
