@@ -51,7 +51,7 @@ RunParameters.xml
 for variableFile in $(ls *.variables); do
 
     #reset variables
-    unset sampleId fastqPair laneId read1Fastq read2Fastq seqId worklistId pipelineVersion pipelineName panel
+    unset sampleId fastqPair laneId read1Fastq read2Fastq seqId worklistId pipelineVersion pipelineName panel read1Adapter read2Adapter
     failed=false
 
     #load variables into local scope
@@ -68,11 +68,27 @@ for variableFile in $(ls *.variables); do
         laneId=$(echo "$fastqPair" | cut -d_ -f3)
         read1Fastq=$(ls "$fastqPair"_R1*fastq.gz)
         read2Fastq=$(ls "$fastqPair"_R2*fastq.gz)
+
+        if [[ ! -z ${read1Adapter-} && ! -z ${read2Adapter-} ]]; then
+
+            #trim adapters
+            /share/apps/cutadapt-distros/cutadapt-1.10/build/scripts-2.6/cutadapt \
+            -a "$read1Adapter" \
+            -A "$read2Adapter" \
+            --minimum-length 30 \
+            -o "$seqId"_"$laneId"_"$sampleId"_trimmed_R1.fq \
+            -p "$seqId"_"$laneId"_"$sampleId"_trimmed_R2.fq \
+            "$read1Fastq" \
+            "$read2Fastq"
+        else 
+            gzip -dc "$read1Fastq" > "$seqId"_"$laneId"_"$sampleId"_trimmed_R1.fq
+            gzip -dc "$read2Fastq" > "$seqId"_"$laneId"_"$sampleId"_trimmed_R2.fq
+        fi
         
         #convert fastq to ubam
         /share/apps/jre-distros/jre1.8.0_101/bin/java -Djava.io.tmpdir=/state/partition1/tmpdir -Xmx8g -jar /share/apps/picard-tools-distros/picard-tools-2.5.0/picard.jar FastqToSam \
-        F1="$read1Fastq" \
-        F2="$read2Fastq" \
+        F1="$seqId"_"$laneId"_"$sampleId"_trimmed_R1.fq \
+        F2="$seqId"_"$laneId"_"$sampleId"_trimmed_R2.fq \
         O="$seqId"_"$sampleId"_"$laneId"_unaligned.bam \
         READ_GROUP_NAME="$seqId"_"$laneId"_"$sampleId" \
         SAMPLE_NAME="$sampleId" \
@@ -105,10 +121,10 @@ for variableFile in $(ls *.variables); do
     O=Data/"$sampleId"/"$seqId"_"$sampleId"_unaligned.bam
 
     #clean up
-    rm "$sampleId"_*.fastq.gz "$seqId"_"$sampleId"_*_unaligned.bam Data/*/*_fastqc.html Data/*/*_fastqc.zip
+    rm "$sampleId"_*.fastq.gz "$seqId"_"$sampleId"_*_unaligned.bam Data/*/*_fastqc.html Data/*/*_fastqc.zip *_trimmed_R1.fq
 
     #skip failed samples
-    if [ "$failed" = true ] ; then
+    if [ "$failed" = true ]; then
         phoneTrello "$seqId" "$sampleId has failed QC"
         continue;
     fi
