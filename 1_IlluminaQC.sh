@@ -76,7 +76,7 @@ for variableFile in $(ls *.variables); do
         O="$seqId"_"$sampleId"_"$laneId"_unaligned.bam \
         READ_GROUP_NAME="$seqId"_"$laneId"_"$sampleId" \
         SAMPLE_NAME="$sampleId" \
-        LIBRARY_NAME="$worklistId"_"$panel"_"$sampleId" \
+        LIBRARY_NAME="$worklistId"_"$sampleId"_"$panel" \
         PLATFORM_UNIT="$seqId"_"$laneId" \
         PLATFORM="ILLUMINA" \
         SORT_ORDER=queryname \
