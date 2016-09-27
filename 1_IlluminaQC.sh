@@ -77,7 +77,7 @@ for variableFile in $(ls *.variables); do
         cp /data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVersion"/*sh /data/results/"$seqId"/"$panel"/"$sampleId"
 
         #queue pipeline
-        bash -c cd /data/results/"$seqId"/"$panel"/"$sampleId" && qsub 1_*.sh
+        bash -c "cd /data/results/$seqId/$panel/$sampleId && qsub 1_*.sh"
 
     fi
 
