@@ -22,6 +22,11 @@ phoneTrello() {
 #log with Trello
 phoneTrello $(basename "$sourceDir") "Starting QC"
 
+#get SAV metrics & check %Q30 passed QC
+/share/apps/interop-distros/interop-1.0.11/build/bin/usr/local/bin/imaging_table "$sourceDir" | grep -vP "#|Lane|^$" | \
+awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n[$1]++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n[i]"\t"pf[i]/n[i]"\t"q30[i]/n[i]; }' | \
+tee $(basename "$sourceDir")_sav.txt | awk '{ if (NR > 1 && $4 < 80) { print "Run generated insufficient Q30 data"; phoneTrello $(basename "$sourceDir") "Failed QC. Insufficient data"; print "Low Q30" > QC_FAIL } }'
+
 #convert BCLs to FASTQ
 /usr/local/bin/bcl2fastq -l WARNING -R "$sourceDir" -o .
 rm Undetermined_S0_*.fastq.gz
@@ -63,31 +68,17 @@ for variableFile in $(ls *.variables); do
         mkdir /data/results/"$seqId"/"$panel"/"$sampleId"
 
         #soft link files
-        ln -s $PWD/Data/"$variableFile" /data/results/"$seqId"/"$panel"/"$sampleId"
+        ln -s $PWD/Data/"$sampleId"/"$variableFile" /data/results/"$seqId"/"$panel"/"$sampleId"
         for i in $(ls Data/"$sampleId"/"$sampleId"_S*.fastq.gz); do
-            ln -s $PWD/Data/"$sampleId"/"$i" /data/results/"$seqId"/"$panel"/"$sampleId"
+            ln -s $PWD/"$i" /data/results/"$seqId"/"$panel"/"$sampleId"
         done
 
         #copy scripts
         cp /data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVersion"/*sh /data/results/"$seqId"/"$panel"/"$sampleId"
 
-        #create worklist
-        echo /data/results/"$seqId"/"$panel"/"$sampleId" >> workdirs.list
+        #queue pipeline
+        bash -c cd /data/results/"$seqId"/"$panel"/"$sampleId" && qsub 1_*.sh
 
     fi
 
-done
-
-### QC ###
-
-#get SAV metrics & check %Q30 passed QC
-/share/apps/interop-distros/interop-1.0.11/build/bin/usr/local/bin/imaging_table "$sourceDir" | grep -vP "#|Lane|^$" | \
-awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n[$1]++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n[i]"\t"pf[i]/n[i]"\t"q30[i]/n[i]; }' | \
-tee $(basename "$sourceDir")_sav.txt | awk '{ if (NR > 1 && $4 < 80) { print "Run generated insufficient Q30 data"; phoneTrello $(basename "$sourceDir") "Failed QC. Insufficient data"; print "Low % Q30" > /data/results/"$seqId"/QC_FAIL } }'
-ln -s $(basename "$sourceDir")_sav.txt /data/results/"$seqId"
-
-### Launch analysis ###
-phoneTrello $(basename "$sourceDir") "Launching analysis..."
-for i in $(sort workdirs.list | uniq); do
-    bash -c cd "$i" && qsub 1_*.sh
 done
