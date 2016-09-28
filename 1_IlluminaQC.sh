@@ -20,12 +20,12 @@ phoneTrello() {
 ### Preparation ###
 
 #log with Trello
-phoneTrello $(basename "$sourceDir") "Starting QC"
+phoneTrello $(basename "$sourceDir") "Performing quality control ..."
 
 #get SAV metrics & check %Q30 passed QC
 /share/apps/interop-distros/interop-1.0.11/build/bin/usr/local/bin/imaging_table "$sourceDir" | grep -vP "#|Lane|^$" | \
 awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n[$1]++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n[i]"\t"pf[i]/n[i]"\t"q30[i]/n[i]; }' | \
-tee $(basename "$sourceDir")_sav.txt | awk '{ if (NR > 1 && $4 < 80) { print "Run generated insufficient Q30 data"; phoneTrello $(basename "$sourceDir") "Failed QC. Insufficient data"; print "Low Q30" > QC_FAIL } }'
+tee $(basename "$sourceDir")_sav.txt | awk '{ if (NR > 1 && $4 < 80) { print "Lane $1 generated low Q30% ($4%)"; phoneTrello $(basename "$sourceDir") "Lane $1 generated low Q30% ($4%)"; } }'
 
 #convert BCLs to FASTQ
 /usr/local/bin/bcl2fastq -l WARNING -R "$sourceDir" -o .
