@@ -9,18 +9,9 @@ cd $PBS_O_WORKDIR
 #Author: Matt Lyon, All Wales Medical Genetics Lab
 #Mode: BY_RUN
 #Usage: mkdir /data/archive/fastq/"$seqId" && cd /data/archive/fastq/"$seqId" && qsub -v sourceDir=/data/archive/miseq/"$seqId" /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-"$version"/1_IlluminaQC.sh
-version="dev"
-
-phoneTrello() {
-    /share/apps/node-distros/node-v4.4.7-linux-x64/bin/node \
-    /data/diagnostics/scripts/TrelloAPI.js \
-    "$1" "$2" #seqId & message
-}
+version="1.0.0"
 
 ### Preparation ###
-
-#log with Trello
-phoneTrello $(basename "$sourceDir") "Performing quality control ..."
 
 #get SAV metrics & check %Q30 passed QC
 /share/apps/interop-distros/interop-1.0.11/build/bin/usr/local/bin/imaging_table "$sourceDir" | grep -vP "#|Lane|^$" | \
