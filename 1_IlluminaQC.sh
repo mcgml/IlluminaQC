@@ -9,7 +9,7 @@ cd $PBS_O_WORKDIR
 #Author: Matt Lyon, All Wales Medical Genetics Lab
 #Mode: BY_RUN
 #Usage: mkdir /data/archive/fastq/"$seqId" && cd /data/archive/fastq/"$seqId" && qsub -v sourceDir=/data/archive/miseq/"$seqId" /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-"$version"/1_IlluminaQC.sh
-version="1.0.1"
+version="1.0.3"
 
 ### Preparation ###
 
