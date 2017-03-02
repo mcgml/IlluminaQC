@@ -8,7 +8,7 @@ cd $PBS_O_WORKDIR
 #Description: FASTQ generation and quality control for paired-end Illumina sequencing data. Not for use with other instruments or run configurations.
 #Author: Matt Lyon, All Wales Medical Genetics Lab
 #Mode: BY_RUN
-#Usage: mkdir /data/archive/fastq/"$seqId" && cd /data/archive/fastq/"$seqId" && qsub -v sourceDir=/data/archive/miseq/"$seqId" /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-"$version"/1_IlluminaQC.sh
+#Usage: mkdir /data/archive/fastq/<seqId> && cd /data/archive/fastq/<seqId> && qsub -v sourceDir=/data/archive/miseq/<seqId> /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-<version>/1_IlluminaQC.sh
 version="1.0.3"
 
 ### Preparation ###
