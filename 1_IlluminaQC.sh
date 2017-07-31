@@ -9,14 +9,30 @@ cd $PBS_O_WORKDIR
 #Author: Matt Lyon, All Wales Medical Genetics Lab
 #Mode: BY_RUN
 #Usage: mkdir /data/archive/fastq/<seqId> && cd /data/archive/fastq/<seqId> && qsub -v sourceDir=/data/archive/miseq/<seqId> /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-<version>/1_IlluminaQC.sh
-version="1.0.3"
+version="1.0.4"
 
 ### Preparation ###
 
-#get SAV metrics & check %Q30 passed QC
-/share/apps/interop-distros/interop-1.0.11/build/bin/usr/local/bin/imaging_table "$sourceDir" | grep -vP "#|Lane|^$" | \
-awk -F, '{ density[$1]+=$6; pf[$1]+=$10; q30[$1]+=$15; n[$1]++ } END { print "Lane\tClusterDensity\tPctPassingFilter\tPctGtQ30"; for(i in density) print i"\t"density[i]/n[i]"\t"pf[i]/n[i]"\t"q30[i]/n[i]; }' | \
-tee $(basename "$sourceDir")_sav.txt | awk '{ if (NR > 1 && $4 < 80) { print "Lane $1 generated low Q30% ($4%)" } }'
+#collect interop data
+summary=$(/share/apps/interop-distros/InterOp-1.0.25-Linux-GNU-4.8.2/bin/summary --level=3 --csv=1 "$sourceDir")
+
+#extract fields
+yieldGb=$(echo "$summary" | grep ^Total | cut -d, -f2)
+q30Pct=$(echo "$summary" | grep ^Total | cut -d, -f7)
+avgDensity=$(echo "$summary" | grep -A999 "^Level" | grep ^[[:space:]]*[0-9] | awk -F',| ' '{print $1"\t"$4}' | sort | uniq | awk -F'\t' '{total += $2; count++} END {print total/count}')
+avgPf=$(echo "$summary" | grep -A999 "^Level" |grep ^[[:space:]]*[0-9] | awk -F',| ' '{print $1"\t"$7}' | sort | uniq | awk -F'\t' '{total += $2; count++} END {print total/count}')
+totalReads=$(echo "$summary" | grep -A999 "^Level" | grep ^[[:space:]]*[0-9] | awk -F',| ' '{print $1"\t"$19}' | sort | uniq | awk -F'\t' '{total += $2} END {print total}')
+
+#print metrics (headers)
+if [ ! -e /data/temp/Metrics.txt ]; then
+    echo -e "Run\tTotalGb\tQ30\tAvgDensity\tAvgPF\tTotalMReads" > /data/temp/Metrics.txt
+fi
+
+#print metrics (values)
+echo -e "$run\t$yieldGb\t$q30Pct\t$avgDensity\t$avgPf\t$totalReads" >> /data/temp/Metrics.txt
+
+#update run log
+#TODO
 
 #convert BCLs to FASTQ
 /usr/local/bin/bcl2fastq -l WARNING -R "$sourceDir" -o .
