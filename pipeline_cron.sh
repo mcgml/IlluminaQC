@@ -4,6 +4,7 @@ set -euo pipefail
 #Description: shell script to launch bioinformatics analysis pipelines. Run as root cron job without .sh extension
 #Author:Matt Lyon
 #Date: 28/02/17
+version="1.0.5"
 
 function processJobs {
     echo "checking for jobs in $1 ..."
@@ -28,7 +29,7 @@ function processJobs {
         chmod -R 755 /data/archive/"$instrumentType"/"$run"
 
         #launch IlluminaQC for demultiplexing and QC
-        ssh transfer@10.59.210.245 "mkdir /data/archive/fastq/$run && cd /data/archive/fastq/$run && qsub -v sourceDir=/data/archive/$instrumentType/$run /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-1.0.4/1_IlluminaQC.sh"
+        ssh transfer@10.59.210.245 "mkdir /data/archive/fastq/$run && cd /data/archive/fastq/$run && qsub -v sourceDir=/data/archive/$instrumentType/$run /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-$version/1_IlluminaQC.sh"
 
     done
 

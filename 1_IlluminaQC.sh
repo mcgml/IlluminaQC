@@ -9,7 +9,7 @@ cd $PBS_O_WORKDIR
 #Author: Matt Lyon, All Wales Medical Genetics Lab
 #Mode: BY_RUN
 #Usage: mkdir /data/archive/fastq/<seqId> && cd /data/archive/fastq/<seqId> && qsub -v sourceDir=/data/archive/miseq/<seqId> /data/diagnostics/pipelines/IlluminaQC/IlluminaQC-<version>/1_IlluminaQC.sh
-version="1.0.4"
+version="1.0.5"
 
 ### Preparation ###
 
@@ -29,7 +29,7 @@ if [ ! -e /data/temp/Metrics.txt ]; then
 fi
 
 #print metrics (values)
-echo -e "$run\t$yieldGb\t$q30Pct\t$avgDensity\t$avgPf\t$totalReads" >> /data/temp/Metrics.txt
+echo -e "$(basename $sourceDir)\t$yieldGb\t$q30Pct\t$avgDensity\t$avgPf\t$totalReads" >> /data/temp/Metrics.txt
 
 #update run log
 #TODO
