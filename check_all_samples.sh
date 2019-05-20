@@ -3,15 +3,15 @@ CURRENTDIRECTORY=$(pwd)
 INPUTFOLDER=${CURRENTDIRECTORY%/*}/
 
 # clear sample name list
->samplenames.list
+>"samplenames.list"
 
 # obtain list of samples from sample sheet
 for line in $(sed "1,/Sample_ID/d" "$INPUTFOLDER""SampleSheet.csv" | tr -d " ")
 do
-    # obtain sample name and patient name		
-    samplename=$(printf "$line" | cut -d, -f1 | sed 's/[^a-zA-Z0-9]+/-/g')
-	echo $samplename >> samplenames.list
-    done
+	# obtain sample name and patient name		
+	samplename=$(printf "$line" | cut -d, -f1 | sed 's/[^a-zA-Z0-9]+/-/g')
+	echo $samplename >> "samplenames.list"
+done
 
 	
 # compare samples list to generated variables files by count 
@@ -26,7 +26,7 @@ fi
 # compare samples list to fastqs generated
 for sn in $( cat samplenames.list )
 do
-	if ! [[ $(find . -name $sn'*fastq*') ]]
+	if ! [[ $(find . -name "$sn"'*fastq*') ]]
 	then
 		echo "Missing fastqs for sample " $sn
 		exit 1
