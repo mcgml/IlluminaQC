@@ -39,7 +39,7 @@ echo -e "$(basename $sourceDir)\t$yieldGb\t$q30Pct\t$avgDensity\t$avgPf\t$totalR
 >"samplenames.list"
 
 # obtain list of samples from sample sheet
-for line in $(sed "1,/Sample_ID/d" "$sourceDir""SampleSheet.csv" | tr -d " ")
+for line in $(sed "1,/Sample_ID/d" "$sourceDir"/"SampleSheet.csv" | tr -d " ")
 do
 	# obtain sample name and patient name		
 	samplename=$(printf "$line" | cut -d, -f1 | sed 's/[^a-zA-Z0-9]+/-/g')
@@ -94,39 +94,36 @@ for variableFile in $(ls *.variables); do
 	. "$variableFile"
 
 	#make sample folder
-	#mkdir Data/"$sampleId"
-	#mv "$variableFile" Data/"$sampleId"
-	#mv "$sampleId"_S*.fastq.gz Data/"$sampleId"
+	mkdir Data/"$sampleId"
+	mv "$variableFile" Data/"$sampleId"
+	mv "$sampleId"_S*.fastq.gz Data/"$sampleId"
 	
-	#launch analysis
-	#if [[ ! -z ${pipelineVersion-} && ! -z ${pipelineName-} && ! -z ${panel-} ]]
-	#then
+	#create analysis folders
+	if [[ ! -z ${pipelineVersion-} && ! -z ${pipelineName-} && ! -z ${panel-} ]]
+	then
 
 		#make project folders
-		#mkdir -p /data/results/"$seqId"
-		#mkdir -p /data/results/"$seqId"/"$panel"
+		mkdir -p /data/results/"$seqId"
+		mkdir -p /data/results/"$seqId"/"$panel"
 
 		#make sample folder
-		#mkdir /data/results/"$seqId"/"$panel"/"$sampleId"
+		mkdir /data/results/"$seqId"/"$panel"/"$sampleId"
 
 		#soft link files
-		#ln -s $PWD/Data/"$sampleId"/"$variableFile" /data/results/"$seqId"/"$panel"/"$sampleId"
-		#for i in $(ls Data/"$sampleId"/"$sampleId"_S*.fastq.gz); do
-			#ln -s $PWD/"$i" /data/results/"$seqId"/"$panel"/"$sampleId"
-		#done
+		ln -s $PWD/Data/"$sampleId"/"$variableFile" /data/results/"$seqId"/"$panel"/"$sampleId"
+		for i in $(ls Data/"$sampleId"/"$sampleId"_S*.fastq.gz); do
+			ln -s $PWD/"$i" /data/results/"$seqId"/"$panel"/"$sampleId"
+		done
 
 		#copy scripts
-		#cp /data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVersion"/*sh /data/results/"$seqId"/"$panel"/"$sampleId"
+		cp /data/diagnostics/pipelines/"$pipelineName"/"$pipelineName"-"$pipelineVersion"/*sh /data/results/"$seqId"/"$panel"/"$sampleId"
 
-		#queue pipeline
-		#bash -c "cd /data/results/$seqId/$panel/$sampleId && qsub 1_*.sh"
+	else
 
-	#else
+		echo "pipeline name, version or panel not set for " "$sampleId"
+		exit 1
 
-		#echo "pipeline name, version or panel not set for " "$sampleId"
-		#exit 1
-
-	#fi
+	fi
 
 done
 
@@ -137,9 +134,10 @@ then
 	echo "Number of sample directories created not as expected"
 	exit 1
 else
-	#for sampledirectory in 
-		#bash -c "cd /data/results/$seqId/$panel/$sampleId && qsub 1_*.sh"
-	#done
+	for sampledirectory in $(ls /data/results/"$seqId"/"$panel"/)
+	do
+		bash -c "cd /data/results/$seqId/$panel/$sampledirectory && qsub 1_*.sh"
+	done
 	echo "Expected number of sample directories created"
 fi
 
