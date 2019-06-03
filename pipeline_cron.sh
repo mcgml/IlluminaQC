@@ -37,3 +37,4 @@ function processJobs {
 
 processJobs "/data/raw/miseq"
 processJobs "/data/raw/hiseq"
+processJobs "/data/raw/nextseq"
